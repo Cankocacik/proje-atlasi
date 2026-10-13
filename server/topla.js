@@ -6,7 +6,7 @@ import { fetchGerekirse, gitOzeti } from "./git.js";
 import { githubOzeti } from "./github.js";
 import { manifestDogrula } from "./manifest.js";
 import { saglikKontrol } from "./saglik.js";
-import { akisiBirlestir, akisSec, ASAMA_SIRA, durumBul, haftalikOzet, uyarilariUret } from "./turet.js";
+import { akisiBirlestir, akisSec, ASAMA_SIRA, durumBul, haftalikOzet, uyarilariUret, yayinAdimlari } from "./turet.js";
 
 const KOK = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const MANIFEST_YOLU = resolve(KOK, "projeler.json");
@@ -126,7 +126,13 @@ export async function topla({ zorla = false, ayar, surecler = null, saglikKaydi 
     projeler: projeler.map(({ git, ...p }) => ({
       ...p,
       git: git && git.var
-        ? { var: true, kaynak: git.kaynak, dal: git.dal, son: git.son, degisen: git.degisen, ileride: git.ileride, geride: git.geride, canlida: git.canlida ?? null }
+        ? {
+          var: true, kaynak: git.kaynak, dal: git.dal, son: git.son, degisen: git.degisen, ileride: git.ileride, geride: git.geride, canlida: git.canlida ?? null,
+          // Dosya listesi ekrana gitmez (büyük olabilir); yalnız sayısı ve ondan çıkan adımlar.
+          bekleyen: git.bekleyen
+            ? { commitler: git.bekleyen.commitler, dosyaSayisi: git.bekleyen.dosyalar.length, adimlar: yayinAdimlari(git.bekleyen.dosyalar, p.yayin?.adimlar) }
+            : null,
+        }
         : git,
     })),
     surecler: surecler?.map(({ outLog: _o, errLog: _e, ...s }) => s) ?? null,

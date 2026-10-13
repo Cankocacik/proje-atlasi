@@ -77,6 +77,31 @@ export function akisiBirlestir(projeler, sinir = 40) {
 }
 
 /**
+ * Yayın adımları: bekleyen dosyalar manifestteki kurallarla eşlenir (kural sırası = uygulama sırası).
+ * kural: { yol: "backend/migrations/", adim: "cd backend; npm run migrate", not? }
+ *   yol "" → her değişiklikte (ör. git pull); "/" ile biten → klasör öneki; diğerleri → tam dosya ya da o klasör.
+ * Eşleşmeyen kural listeye girmez.
+ */
+export function yayinAdimlari(dosyalar, kurallar = []) {
+  const adimlar = [];
+  for (const k of kurallar) {
+    if (typeof k?.adim !== "string") continue;
+    const yol = k.yol ?? "";
+    const eslesir = (d) => (yol.endsWith("/") ? d.startsWith(yol) : d === yol || d.startsWith(`${yol}/`));
+    const eslesen = yol === "" ? dosyalar : dosyalar.filter(eslesir);
+    if (!eslesen.length) continue;
+    // Aynı komut iki kuraldan gelirse bir kez yazılır (dosya sayıları birleşir).
+    const onceki = adimlar.find((a) => a.adim === k.adim);
+    if (onceki) {
+      onceki.dosya += eslesen.length;
+      continue;
+    }
+    adimlar.push({ adim: k.adim, ...(k.not ? { not: k.not } : {}), ...(k.bilgi ? { bilgi: true } : {}), dosya: eslesen.length, ornek: eslesen.slice(0, 3) });
+  }
+  return adimlar;
+}
+
+/**
  * Ekrana giden akış: genel son `genel` commit + her projenin kendi son `projeBasi` commit'i.
  * Yalnız genel sınır olsaydı az commit alan modülün detayı "commit yok" derdi.
  */

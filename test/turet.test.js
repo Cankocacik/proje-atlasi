@@ -110,3 +110,42 @@ describe("akisSec", async () => {
     expect(r.map((x) => x.hash)).toEqual(["a", "b", "x"]);
   });
 });
+
+describe("yayinAdimlari", async () => {
+  const { yayinAdimlari } = await import("../server/turet.js");
+  const kurallar = [
+    { yol: "", adim: "git pull" },
+    { yol: "backend/package-lock.json", adim: "npm install", not: "ci değil" },
+    { yol: "backend/package.json", adim: "npm install" },
+    { yol: "backend/migrations/", adim: "npm run migrate" },
+    { yol: "backend", adim: "pm2 restart siparis-backend" },
+    { yol: "frontend/", adim: "Vercel", bilgi: true },
+  ];
+
+  it("dosyalardan sıralı ve tekilleştirilmiş adım listesi çıkarır", () => {
+    const r = yayinAdimlari(["backend/package.json", "backend/package-lock.json", "backend/migrations/2026-10-14-x.sql", "backend/src/a.js"], kurallar);
+    expect(r.map((a) => [a.adim, a.dosya])).toEqual([
+      ["git pull", 4],
+      ["npm install", 2],
+      ["npm run migrate", 1],
+      ["pm2 restart siparis-backend", 4],
+    ]);
+    expect(r[1].not).toBe("ci değil");
+    expect(r[2].ornek).toEqual(["backend/migrations/2026-10-14-x.sql"]);
+  });
+
+  it("yalnız frontend değiştiyse backend adımı çıkmaz; bilgi satırı işaretlenir", () => {
+    const r = yayinAdimlari(["frontend/app/page.tsx"], kurallar);
+    expect(r.map((a) => a.adim)).toEqual(["git pull", "Vercel"]);
+    expect(r[1].bilgi).toBe(true);
+  });
+
+  it("klasör adı benzer olan başka klasörü eşlemez", () => {
+    expect(yayinAdimlari(["backend-eski/x.js"], kurallar).map((a) => a.adim)).toEqual(["git pull"]);
+  });
+
+  it("kural yoksa ya da dosya yoksa boş", () => {
+    expect(yayinAdimlari(["a"], undefined)).toEqual([]);
+    expect(yayinAdimlari([], kurallar)).toEqual([]);
+  });
+});

@@ -6,6 +6,11 @@ export const ASAMALAR = ["fikir", "gelistirme", "bekliyor", "canli", "beklemede"
 export const IKONLAR = ["hub", "product", "tool", "client", "module"];
 export const ESKI_NOT_GUN = 21;
 
+// JSON'da "C:\backend" hata vermez: \b sessizce backspace olur. Yolda kontrol karakteri = bozuk kaçış.
+// eslint-disable-next-line no-control-regex
+const KONTROL_KARAKTERI = /[\u0000-\u001f]/;
+const KACIS_MESAJI = "kontrol karakteri var — ters bölü kaçışı bozulmuş (\\b, \\t…); yolda düz bölü kullan: C:/klasor";
+
 const urlMi = (s) => {
   try {
     return ["http:", "https:"].includes(new URL(s).protocol);
@@ -45,8 +50,20 @@ export function manifestDogrula(m, simdi = new Date()) {
       if (p?.[alan] != null && !urlMi(p[alan])) ekle("hata", yer, `${alan} geçerli bir http(s) adresi değil`);
     }
     if (p?.github != null && !/^[\w.-]+\/[\w.-]+$/.test(p.github)) ekle("hata", yer, "github \"sahip/repo\" biçiminde olmalı");
+    if (typeof p?.repo === "string" && KONTROL_KARAKTERI.test(p.repo)) ekle("hata", yer, `repo: ${KACIS_MESAJI}`);
     if (p?.pm2 != null && !(Array.isArray(p.pm2) && p.pm2.every((x) => typeof x === "string"))) ekle("hata", yer, "pm2 süreç adları dizisi olmalı");
     if (p?.kapsam != null && !Array.isArray(p.kapsam)) ekle("hata", yer, "kapsam yol dizisi olmalı");
+
+    if (p?.yayin != null) {
+      const kurallar = p.yayin.adimlar;
+      if (!Array.isArray(kurallar)) ekle("hata", yer, "yayin.adimlar dizi olmalı");
+      else for (const [j, k] of kurallar.entries()) {
+        if (typeof k?.adim !== "string" || !k.adim.trim()) ekle("hata", yer, `yayin.adimlar[${j}]: adim boş`);
+        else if (KONTROL_KARAKTERI.test(k.adim)) ekle("hata", yer, `yayin.adimlar[${j}]: ${KACIS_MESAJI}`);
+        if (k?.yol != null && typeof k.yol !== "string") ekle("hata", yer, `yayin.adimlar[${j}]: yol metin olmalı`);
+        if (typeof k?.yol === "string" && k.yol.startsWith("/")) ekle("uyari", yer, `yayin.adimlar[${j}]: yol repo köküne göredir, "/" ile başlamaz`);
+      }
+    }
 
     const adimIdleri = new Set();
     for (const a of p?.adimlar ?? []) {

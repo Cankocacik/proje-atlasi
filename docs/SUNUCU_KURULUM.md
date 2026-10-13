@@ -65,6 +65,23 @@ erişim** (Cloudflare'in kendi 404'ü = tünel kuralı yok; 530 = tünel kapalı
 Atlas açılışta ve 30 dakikada bir kendini denetler; hata çıkarsa haritadaki **Proje Atlası**
 düğümü kırmızıya döner ve olay günlüğüne yazılır. Her satır sorunu çözecek komutu da söyler.
 
+## Canlıya bekleyen iş ve yayın adımları
+
+Atlas izlediği repolarda beş dakikada bir `git fetch` yapar. Sunucudaki kopya GitHub'ın gerisindeyse
+proje detayında **CANLIYA BEKLEYEN** kutusu çıkar: hangi commitler, kaç dosya ve bu dosyalardan
+çıkarılan **sıralı yayın adımları** (her biri kopyalanabilir komut). Kurallar `projeler.json` →
+`yayin.adimlar`'dadır; örneğin Rosbel için:
+
+1. `cd C:/SiparisOnayProjesi; git pull` (her zaman)
+2. `backend/package*.json` değiştiyse `npm install` (npm ci değil)
+3. `backend/migrations/` değiştiyse `npm run migrate:status; npm run migrate`
+4. `backend/` değiştiyse `pm2 restart siparis-backend --update-env`
+5. Yalnız `frontend/` değiştiyse: "Vercel'de, sunucuda iş yok"
+
+Mutabiko'da web değişikliği build'den önce `pm2 stop mutabiko-web` ile başlar (ISR tuzağı);
+Atlas'ın kendisi için tek adım `scripts/guncelle.ps1`. Kopyaladığın komutu kendin çalıştırırsın —
+Atlas hiçbir şeyi kendiliğinden yayınlamaz.
+
 ## Giriş
 
 Parola **Rosbel portalındaki `muhammed@rosbeltr.com` kullanıcısının parolasıdır**

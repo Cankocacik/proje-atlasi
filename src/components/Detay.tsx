@@ -4,6 +4,7 @@ import { gunFarki, goreli, tarihSaat } from "../lib/zaman";
 import { ASAMA_ETIKET } from "../lib/etiket";
 import { projeIlerlemesi, projeKapsami } from "../lib/ilerleme";
 import { kutuAraligi } from "../lib/olay";
+import { Bekleyen } from "./Bekleyen";
 import { ProjeIkon, Svg } from "./Ikon";
 
 interface Props {
@@ -109,6 +110,8 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
           <div className="erisim-alt mono"><span>24 sa önce</span><span>şimdi</span></div>
         </div>
       )}
+
+      {p.git?.bekleyen && <Bekleyen bekleyen={p.git.bekleyen} ortam={veri.ortam} simdi={simdi} />}
 
       {p.uyarilar.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

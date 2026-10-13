@@ -56,6 +56,7 @@ export interface Proje {
     ileride?: number | null;
     geride?: number | null;
     canlida?: string | null;
+    bekleyen?: Bekleyen | null;
   } | null;
   saglik: { ok: boolean; kod: number | null; ms: number | null; hata?: string } | null;
 }
@@ -153,4 +154,20 @@ export interface AtlasBilgi {
   derlemeEski: boolean;
   node: string;
   baslangic: string;
+}
+
+export interface YayinAdimi {
+  adim: string;
+  not?: string;
+  /** Komut değil bilgi satırı (kopyalanmaz). */
+  bilgi?: boolean;
+  dosya: number;
+  ornek: string[];
+}
+
+/** Uzakta olup bu kopyada olmayan iş: sunucuda "canlıya bekleyen", PC'de "çekilmemiş". */
+export interface Bekleyen {
+  commitler: Commit[];
+  dosyaSayisi: number;
+  adimlar: YayinAdimi[];
 }

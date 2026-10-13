@@ -81,3 +81,16 @@ describe("elle uyarı biçimleri", () => {
     ]);
   });
 });
+
+describe("ters bölü kaçışı", () => {
+  it("JSON'da backspace'e dönüşmüş yolu yakalar", () => {
+    // JSON metninde C:\backend yazılmış gibi: ayrıştırınca \b backspace olur.
+    const ters = String.fromCharCode(92);
+    const metin = `{"projeler":[{"id":"a","ad":"A","asama":"canli","ikon":"module","konum":{"x":1,"y":1},"repo":"C:${ters}backend","yayin":{"adimlar":[{"yol":"","adim":"cd C:${ters}backend; git pull"}]}}]}`;
+    const m = JSON.parse(metin);
+    expect(m.projeler[0].repo).toBe("C:\u0008ackend");
+    const r = manifestDogrula(m).map((s) => s.mesaj);
+    expect(r.some((x) => x.startsWith("repo: kontrol karakteri"))).toBe(true);
+    expect(r.some((x) => x.startsWith("yayin.adimlar[0]: kontrol karakteri"))).toBe(true);
+  });
+});

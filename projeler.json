@@ -48,7 +48,39 @@
       ],
       "pm2": [
         "siparis-backend"
-      ]
+      ],
+      "yayin": {
+        "adimlar": [
+          {
+            "yol": "",
+            "adim": "cd C:/SiparisOnayProjesi; git pull"
+          },
+          {
+            "yol": "backend/package-lock.json",
+            "adim": "cd C:/SiparisOnayProjesi/backend; npm install",
+            "not": "npm ci değil: çalışan pm2 süreci node_modules'ü kilitler"
+          },
+          {
+            "yol": "backend/package.json",
+            "adim": "cd C:/SiparisOnayProjesi/backend; npm install",
+            "not": "npm ci değil: çalışan pm2 süreci node_modules'ü kilitler"
+          },
+          {
+            "yol": "backend/migrations/",
+            "adim": "cd C:/SiparisOnayProjesi/backend; npm run migrate:status; npm run migrate",
+            "not": "önce durum, sonra uygula"
+          },
+          {
+            "yol": "backend/",
+            "adim": "pm2 restart siparis-backend --update-env"
+          },
+          {
+            "yol": "frontend/",
+            "adim": "Frontend Vercel'de: main'e push yeterli, sunucuda iş yok",
+            "bilgi": true
+          }
+        ]
+      }
     },
     {
       "id": "mutabiko",
@@ -89,7 +121,38 @@
         "mutabiko-api",
         "mutabiko-web",
         "mutabiko-tunnel"
-      ]
+      ],
+      "yayin": {
+        "adimlar": [
+          {
+            "yol": "",
+            "adim": "cd C:/mutabik; git pull"
+          },
+          {
+            "yol": "api/package-lock.json",
+            "adim": "pm2 stop mutabiko-api; cd C:/mutabik/api; npm ci; pm2 start mutabiko-api",
+            "not": "çalışan süreç varken npm ci yarım kalır"
+          },
+          {
+            "yol": "web/package-lock.json",
+            "adim": "pm2 stop mutabiko-web; cd C:/mutabik/web; npm ci"
+          },
+          {
+            "yol": "api/migrations/",
+            "adim": "cd C:/mutabik/api; npm run migrate:status; npm run migrate",
+            "not": "önce durum, sonra uygula"
+          },
+          {
+            "yol": "api/",
+            "adim": "pm2 restart mutabiko-api --update-env"
+          },
+          {
+            "yol": "web/",
+            "adim": "pm2 stop mutabiko-web; cd C:/mutabik/web; npm run build; pm2 start mutabiko-web",
+            "not": "build sırasında eski süreç ISR sayfalarını eski kodla yeniden üretmesin diye önce durdurulur"
+          }
+        ]
+      }
     },
     {
       "id": "tasarim",
@@ -381,7 +444,16 @@
       ],
       "saglik": "https://atlas.rosbelportal.com/api/oturum",
       "url": "https://atlas.rosbelportal.com",
-      "aciklama": "Bu ekran. Sunucuda pm2 + Cloudflare Tunnel ile çalışır; kurulum denetiminin sorunları burada uyarı olarak görünür."
+      "aciklama": "Bu ekran. Sunucuda pm2 + Cloudflare Tunnel ile çalışır; kurulum denetiminin sorunları burada uyarı olarak görünür.",
+      "yayin": {
+        "adimlar": [
+          {
+            "yol": "",
+            "adim": "powershell -ExecutionPolicy Bypass -File C:/proje-atlasi/scripts/guncelle.ps1",
+            "not": "derleme, yeniden başlatma ve geri dönüş betikte"
+          }
+        ]
+      }
     }
   ],
   "akislar": [

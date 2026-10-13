@@ -290,3 +290,20 @@ textarea.alan { padding: 10px 12px; resize: vertical; }
 .manifest-serit summary .sessiz { margin-left: auto; font-size: 10.5px; }
 .manifest-serit ul { margin: 0; padding: 0 14px 12px 38px; display: flex; flex-direction: column; gap: 5px; }
 .manifest-serit li .mono { color: var(--yazi-2); font-size: 11px; }
+
+/* Canlıya bekleyen + yayın adımları (proje detayı) */
+.bekleyen { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid color-mix(in srgb, var(--dev) 35%, var(--cizgi)); border-radius: 8px; background: color-mix(in srgb, var(--dev) 4%, var(--panel)); }
+.bekleyen-baslik { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 10.5px; }
+.bekleyen-commitler { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; font-size: 12px; }
+.bekleyen-commitler li { display: flex; flex-direction: column; gap: 1px; }
+.bekleyen-commitler .mono { font-size: 10px; }
+.bekleyen-mesaj { color: var(--yazi-2); overflow-wrap: anywhere; }
+.yayin-adimlari { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--cizgi); padding-top: 10px; }
+.yayin-adimlari ol { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: 11.5px; }
+.yayin-adimlari li::marker { color: var(--dev); font: 10px var(--mono); }
+.yayin-adim-satir { display: flex; align-items: flex-start; gap: 6px; }
+.yayin-adim-satir code { flex: 1; min-width: 0; font: 10.5px/1.5 var(--mono); color: var(--yazi); background: var(--zemin); border: 1px solid var(--cizgi); border-radius: 4px; padding: 3px 6px; overflow-wrap: anywhere; }
+.yayin-adim-bilgi { color: var(--sessiz); font-size: 11.5px; }
+.yayin-adim-alt { display: block; font-size: 10px; margin-top: 2px; }
+.kopyala { flex: none; border: 1px solid var(--cizgi-2); background: var(--panel); color: var(--soluk); border-radius: 4px; padding: 2px 6px; font: 10px var(--mono); min-height: 24px; }
+.kopyala:hover { color: var(--yazi); }

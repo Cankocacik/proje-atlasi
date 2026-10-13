@@ -53,6 +53,7 @@ Sunucuda kurulum/güncelleme: `scripts\kurulum.ps1` · `scripts\guncelle.ps1`.
 | `github`, `dal` | `sahip/ad` — `repo` bu makinede yoksa commitler buradan |
 | `pm2` | izlenecek pm2 süreç adları (durmuş süreç, sık yeniden başlama, hata satırı → uyarı) |
 | `atlasKendisi` | `true` olan düğüm Atlas'ın kendisidir; kurulum denetiminin hata/uyarıları buna düşer |
+| `yayin.adimlar` | `[{ yol, adim, not?, bilgi? }]` — canlıya bekleyen dosyalar bu kurallarla eşlenir, detayda sıralı **yayın adımları** çıkar. `yol: ""` her değişiklikte; `"backend/migrations/"` klasör öneki; kural sırası = uygulama sırası. Yollarda **düz bölü** (`C:/klasor`): JSON'da `\b`, `\t` kaçışı sessizce bozulur |
 | `saglik`, `url` | izlenecek adres, "aç" bağlantısı |
 | `surum`, `aciklama` | elle yazılan sürüm ve kısa açıklama |
 | `uyarilar` | elle eklenen dikkat satırları (dizi) |
