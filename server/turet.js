@@ -81,7 +81,8 @@ export function akisiBirlestir(projeler, sinir = 40) {
 
 /**
  * Yayın adımları: bekleyen dosyalar manifestteki kurallarla eşlenir (kural sırası = uygulama sırası).
- * kural: { yol: "backend/migrations/", adim: "cd backend; npm run migrate", not? }
+ * kural: { yol: "backend/migrations/", adim: "cd backend; npm run migrate:verify", not?, bilgi?, dur? }
+ *   dur: karar noktası — çıktısı okunmadan sonraki adıma geçilmez ("tümünü kopyala" burada keser).
  *   yol "" → her değişiklikte (ör. git pull); "/" ile biten → klasör öneki; diğerleri → tam dosya ya da o klasör.
  * Eşleşmeyen kural listeye girmez.
  */
@@ -99,7 +100,7 @@ export function yayinAdimlari(dosyalar, kurallar = []) {
       onceki.dosya += eslesen.length;
       continue;
     }
-    adimlar.push({ adim: k.adim, ...(k.not ? { not: k.not } : {}), ...(k.bilgi ? { bilgi: true } : {}), dosya: eslesen.length, ornek: eslesen.slice(0, 3) });
+    adimlar.push({ adim: k.adim, ...(k.not ? { not: k.not } : {}), ...(k.bilgi ? { bilgi: true } : {}), ...(k.dur ? { dur: true } : {}), dosya: eslesen.length, ornek: eslesen.slice(0, 3) });
   }
   return adimlar;
 }

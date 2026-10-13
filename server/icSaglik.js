@@ -43,8 +43,30 @@ export function icSaglikYorumla(kod, govde) {
   } else if ("db" in govde) {
     kontroller.push({ anahtar: "db", ad: "Veritabanı", ok: govde.db === "ok", ms: null, not: govde.db === "ok" ? null : String(govde.db) });
   }
-  const durum = govde.status ?? (kontroller.every((k) => k.ok) ? "healthy" : "unhealthy");
-  return { erisim: "ok", durum, kontroller, migration };
+  return { erisim: "ok", durum: durumNormalle(govde.status, kontroller), kontroller, migration };
+}
+
+/**
+ * Uygulamalar durumu farklı sözcüklerle yazar (Rosbel healthy/unhealthy, Mutabiko ok/degraded):
+ * olay günlüğü ve bildirim tek sözlük ister. Düşen kontrol varsa sözcüğe bakılmaz → "unhealthy"
+ * (Mutabiko DB düşünce "degraded" der; bu bildirilmesi gereken bir kesintidir).
+ */
+export function durumNormalle(status, kontroller = []) {
+  if (kontroller.some((k) => !k.ok)) return "unhealthy";
+  const s = String(status ?? "").toLowerCase();
+  if (!s || s === "ok" || s === "healthy" || s === "up") return "healthy";
+  if (s === "degraded" || s === "warn" || s === "warning") return "degraded";
+  return "unhealthy";
+}
+
+/** Token yalnız bu makineye gider: manifestte yanlış adres token'ı dışarı taşımasın. */
+export function loopbackMi(url) {
+  try {
+    const h = new URL(url).hostname;
+    return h === "127.0.0.1" || h === "localhost" || h === "[::1]" || h === "::1";
+  } catch {
+    return false;
+  }
 }
 
 /** Saf: yorumlanmış sonuçtan proje uyarıları. */
@@ -72,9 +94,11 @@ export function icSaglikUyarilari(s, { migrationUyarisi = true } = {}) {
 export async function icSaglikOku({ url, tokenEnv }, { env = process.env, fetchFn = fetch } = {}) {
   const t0 = performance.now();
   try {
-    const token = tokenEnv ? env[tokenEnv] : null;
+    const token = tokenEnv && loopbackMi(url) ? env[tokenEnv] : null;
+    // Yönlendirme izlenmez: fetch özel başlığı (x-health-token) başka kökene de taşır.
     const r = await fetchFn(url, {
       signal: AbortSignal.timeout(8000),
+      redirect: "manual",
       headers: { accept: "application/json", ...(token ? { "x-health-token": token } : {}) },
     });
     const govde = await r.json().catch(() => null);

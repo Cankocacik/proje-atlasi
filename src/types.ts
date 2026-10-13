@@ -163,12 +163,16 @@ export interface YayinAdimi {
   not?: string;
   /** Komut değil bilgi satırı (kopyalanmaz). */
   bilgi?: boolean;
+  /** Karar noktası: çıktısı okunmadan sonraki adıma geçilmez (toplu kopya burada biter). */
+  dur?: boolean;
   dosya: number;
   ornek: string[];
 }
 
 /** Uzakta olup bu kopyada olmayan iş: sunucuda "canlıya bekleyen", PC'de "çekilmemiş". */
 export interface Bekleyen {
+  /** Gerçek bekleyen commit sayısı (liste en çok 20 commit taşır). */
+  toplam?: number;
   commitler: Commit[];
   dosyaSayisi: number;
   adimlar: YayinAdimi[];

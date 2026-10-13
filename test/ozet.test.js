@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gunlukOzet, ozetZamaniMi, saatCoz } from "../server/ozet.js";
+import { disariMetin, gunlukOzet, ozetZamaniMi, saatCoz } from "../server/ozet.js";
 
 describe("saatCoz / ozetZamaniMi", () => {
   it("HH:MM okur, geçersizi reddeder", () => {
@@ -61,5 +61,21 @@ describe("gunlukOzet", () => {
 
   it("her şey yolundaysa kısa", () => {
     expect(gunlukOzet({ ortam: "yerel", projeler: [p("a", "A")], olaylar: [] }, { simdi })).toBe("Proje Atlası — günlük özet (14.10)\n\n✓ Dikkat bekleyen iş yok.");
+  });
+});
+
+describe("disariMetin", () => {
+  it("iç sağlık / kurulum / git ayrıntısı Telegram'a gitmez; elle not olduğu gibi gider", () => {
+    expect(disariMetin({ kaynak: "icsaglik", metin: "ERP veritabanı yanıt vermiyor — connect ETIMEDOUT 10.0.0.5:3306" })).toBe("ERP veritabanı yanıt vermiyor");
+    expect(disariMetin({ kaynak: "icsaglik", metin: "İç sağlık ucuna ulaşılamıyor (ECONNREFUSED)" })).toBe("İç sağlık ucuna ulaşılamıyor");
+    expect(disariMetin({ kaynak: "denetim", metin: "Kurulum · Repo: proje-atlasi: fatal: could not read Username" })).toBe("Kurulum · Repo");
+    expect(disariMetin({ kaynak: "git", metin: "GitHub okunamadı (HTTP 401 Bad credentials)" })).toBe("GitHub okunamadı");
+    expect(disariMetin({ kaynak: "elle", metin: "Numune migration'ları (2 adet) bekliyor" })).toBe("Numune migration'ları (2 adet) bekliyor");
+  });
+
+  it("günlük özet satırları ayrıntısız yazılır", () => {
+    const m = gunlukOzet({ projeler: [{ id: "r", ad: "Rosbel", uyarilar: [{ kaynak: "icsaglik", seviye: "yuksek", metin: "Redis yanıt vermiyor — ECONNREFUSED 127.0.0.1:6379" }] }] });
+    expect(m).toContain("✗ Rosbel: Redis yanıt vermiyor");
+    expect(m).not.toContain("6379");
   });
 });

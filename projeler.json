@@ -53,7 +53,7 @@
         "adimlar": [
           {
             "yol": "",
-            "adim": "cd C:/SiparisOnayProjesi; git pull"
+            "adim": "cd C:/SiparisOnayProjesi; git pull --ff-only"
           },
           {
             "yol": "backend/package-lock.json",
@@ -68,7 +68,8 @@
           {
             "yol": "backend/migrations/",
             "adim": "cd C:/SiparisOnayProjesi/backend; npm run migrate:verify",
-            "not": "Defter (_migrations) bayat olabilir: ELLE çıkanları `npm run migrate:verify -- --isaretle` ile deftere yaz, ancak sonra yalnız BEKLİYOR kalanlar için `npm run migrate`. Doğrudan migrate, elle uygulanmışı ikinci kez çalıştırır."
+            "not": "Karar noktası. Defter (_migrations) bayat olabilir: ELLE çıkanları `npm run migrate:verify -- --isaretle` ile deftere yaz, ancak sonra yalnız BEKLİYOR kalanlar için `npm run migrate`. Doğrudan migrate, elle uygulanmışı ikinci kez çalıştırır.",
+            "dur": true
           },
           {
             "yol": "backend/",
@@ -130,12 +131,12 @@
         "adimlar": [
           {
             "yol": "",
-            "adim": "cd C:/mutabik; git pull"
+            "adim": "cd C:/mutabik; git pull --ff-only"
           },
           {
             "yol": "api/package-lock.json",
-            "adim": "pm2 stop mutabiko-api; cd C:/mutabik/api; npm ci; pm2 start mutabiko-api",
-            "not": "çalışan süreç varken npm ci yarım kalır"
+            "adim": "pm2 stop mutabiko-api; cd C:/mutabik/api; npm ci",
+            "not": "çalışan süreç varken npm ci yarım kalır; API aşağıdaki yeniden başlatma adımında açılır (yeni kod migration'dan önce çalışmasın)"
           },
           {
             "yol": "web/package-lock.json",
@@ -144,16 +145,18 @@
           {
             "yol": "api/migrations/",
             "adim": "cd C:/mutabik/api; npm run migrate:verify",
-            "not": "Defter (_migrations) bayat olabilir: ELLE çıkanları `npm run migrate:verify -- --isaretle` ile deftere yaz, ancak sonra yalnız BEKLİYOR kalanlar için `npm run migrate`. Doğrudan migrate, elle uygulanmışı ikinci kez çalıştırır."
+            "not": "Karar noktası. Defter (_migrations) bayat olabilir: ELLE çıkanları `npm run migrate:verify -- --isaretle` ile deftere yaz, ancak sonra yalnız BEKLİYOR kalanlar için `npm run migrate`. Doğrudan migrate, elle uygulanmışı ikinci kez çalıştırır.",
+            "dur": true
           },
           {
             "yol": "api/",
-            "adim": "pm2 restart mutabiko-api --update-env"
+            "adim": "pm2 restart mutabiko-api --update-env",
+            "not": "durdurulmuş süreci de başlatır"
           },
           {
             "yol": "web/",
-            "adim": "pm2 stop mutabiko-web; cd C:/mutabik/web; npm run build; pm2 start mutabiko-web",
-            "not": "build sırasında eski süreç ISR sayfalarını eski kodla yeniden üretmesin diye önce durdurulur"
+            "adim": "pm2 stop mutabiko-web; cd C:/mutabik/web; npm run build; if ($?) { pm2 start mutabiko-web }",
+            "not": "build sırasında eski süreç ISR sayfalarını eski kodla yeniden üretmesin diye önce durdurulur; derleme bozulursa yarım .next ile açılmaz"
           }
         ]
       },

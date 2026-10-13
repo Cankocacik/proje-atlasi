@@ -139,7 +139,7 @@ export async function topla({ zorla = false, ayar, surecler = null, saglikKaydi 
           var: true, kaynak: git.kaynak, dal: git.dal, son: git.son, degisen: git.degisen, ileride: git.ileride, geride: git.geride, canlida: git.canlida ?? null,
           // Dosya listesi ekrana gitmez (büyük olabilir); yalnız sayısı ve ondan çıkan adımlar.
           bekleyen: git.bekleyen
-            ? { commitler: git.bekleyen.commitler, dosyaSayisi: git.bekleyen.dosyalar.length, adimlar: yayinAdimlari(git.bekleyen.dosyalar, p.yayin?.adimlar) }
+            ? { toplam: git.bekleyen.toplam ?? git.bekleyen.commitler.length, commitler: git.bekleyen.commitler, dosyaSayisi: git.bekleyen.dosyalar.length, adimlar: yayinAdimlari(git.bekleyen.dosyalar, p.yayin?.adimlar) }
             : null,
         }
         : git,

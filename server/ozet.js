@@ -23,6 +23,19 @@ export function ozetZamaniMi(hedef, sonGonderilen, simdi = new Date()) {
 
 export { gunAnahtari };
 
+/**
+ * Dışarı (Telegram) giden uyarı metni: ayrıntı evde kalır. İç sağlık notu (DB hata metni),
+ * kurulum denetimi mesajı (git stderr) ve GitHub hata ayrıntısı ekranda görünür, mesaja girmez.
+ */
+export function disariMetin(u) {
+  let m = String(u?.metin ?? "");
+  if (u?.kaynak === "denetim") m = m.replace(/^(Kurulum · [^:]+):[\s\S]*$/, "$1");
+  if (u?.kaynak === "icsaglik" || u?.kaynak === "denetim" || u?.kaynak === "git") {
+    m = m.split(" — ")[0].replace(/\s*\([^)]*\)\s*$/, "");
+  }
+  return m.slice(0, 160);
+}
+
 export function gunlukOzet(anlik, { simdi = new Date(), host = null, sinir = 8 } = {}) {
   const projeler = anlik?.projeler ?? [];
   const tarih = `${String(simdi.getDate()).padStart(2, "0")}.${String(simdi.getMonth() + 1).padStart(2, "0")}`;
@@ -35,7 +48,7 @@ export function gunlukOzet(anlik, { simdi = new Date(), host = null, sinir = 8 }
     satirlar.push("✓ Dikkat bekleyen iş yok.");
   } else {
     satirlar.push(`Dikkat: ${dikkat} proje / modül`);
-    for (const { p, u } of uyarilar.slice(0, sinir)) satirlar.push(`${ISARET[u.seviye] ?? "!"} ${p.ad}: ${u.metin}`);
+    for (const { p, u } of uyarilar.slice(0, sinir)) satirlar.push(`${ISARET[u.seviye] ?? "!"} ${p.ad}: ${disariMetin(u)}`);
     if (uyarilar.length > sinir) satirlar.push(`… +${uyarilar.length - sinir} uyarı daha`);
   }
 

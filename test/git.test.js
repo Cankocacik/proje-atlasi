@@ -47,6 +47,25 @@ describe("gitOzeti (gerçek git)", () => {
     expect((await gitOzeti(sunucu, { ortam: "yerel" })).son.mesaj).toBe("ilk");
   }, 30000);
 
+  it("kopyada yerel commit de varsa yalnız uzaktan gelen dosyalar bekleyen sayılır", async () => {
+    const { gelistirme, sunucu } = kur();
+    writeFileSync(join(gelistirme, "backend", "index.js"), "v2\n");
+    git(gelistirme, "add", ".");
+    git(gelistirme, ...kimlik, "commit", "-q", "-m", "uzak iş");
+    git(gelistirme, "push", "-q", "origin", "HEAD:main");
+    // Sunucuda elle yapılmış, push edilmemiş bir migration: yayın adımına dönüşmemeli.
+    mkdirSync(join(sunucu, "backend", "migrations"), { recursive: true });
+    writeFileSync(join(sunucu, "backend", "migrations", "elle.sql"), "select 2;\n");
+    git(sunucu, "add", ".");
+    git(sunucu, ...kimlik, "commit", "-q", "-m", "sunucuda elle");
+    git(sunucu, "fetch", "-q");
+
+    const o = await gitOzeti(sunucu, { ortam: "sunucu" });
+    expect(o).toMatchObject({ geride: 1, ileride: 1 });
+    expect(o.bekleyen.toplam).toBe(1);
+    expect(o.bekleyen.dosyalar).toEqual(["backend/index.js"]);
+  }, 30000);
+
   it("güncel kopyada bekleyen yok; commit edilmemiş ve push edilmemiş iş sayılır", async () => {
     const { gelistirme } = kur();
     writeFileSync(join(gelistirme, "kirli.txt"), "x\n");

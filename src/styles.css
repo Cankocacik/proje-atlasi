@@ -305,6 +305,8 @@ textarea.alan { padding: 10px 12px; resize: vertical; }
 .yayin-adim-satir code { flex: 1; min-width: 0; font: 10.5px/1.5 var(--mono); color: var(--yazi); background: var(--zemin); border: 1px solid var(--cizgi); border-radius: 4px; padding: 3px 6px; overflow-wrap: anywhere; }
 .yayin-adim-bilgi { color: var(--sessiz); font-size: 11.5px; }
 .yayin-adim-alt { display: block; font-size: 10px; margin-top: 2px; }
+.yayin-adimlari li.dur::marker { color: var(--warn); }
+.karar-noktasi { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; margin-top: 7px; padding: 6px 8px; border-radius: 5px; border: 1px dashed color-mix(in srgb, var(--warn) 55%, transparent); color: var(--warn); font-size: 10.5px; }
 .kopyala { flex: none; border: 1px solid var(--cizgi-2); background: var(--panel); color: var(--soluk); border-radius: 4px; padding: 2px 6px; font: 10px var(--mono); min-height: 24px; }
 .kopyala:hover { color: var(--yazi); }
 

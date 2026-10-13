@@ -72,9 +72,11 @@ export async function gitOzeti(repo, { kapsam = [], haric = [], gun = 21, ortam 
   if (sayi(geride) > 0) {
     const [bLog, bDosya] = await Promise.all([
       git(repo, ["log", "-n", "20", bicim, "HEAD..@{u}", ...spec]),
-      git(repo, ["diff", "--name-only", "HEAD", "@{u}", ...spec]),
+      // Üç nokta: ortak atadan @{u}'ya — bu kopyadaki yerel commitler "bekleyen" sayılmaz.
+      git(repo, ["diff", "--name-only", "HEAD...@{u}", ...spec]),
     ]);
     bekleyen = {
+      toplam: sayi(geride),
       commitler: logSatirlariniAyristir(bLog),
       dosyalar: bDosya ? bDosya.split("\n").filter(Boolean).slice(0, 2000) : [],
     };

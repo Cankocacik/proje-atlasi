@@ -26,6 +26,19 @@ function Dur($m) { Write-Host "  [DUR]   $m" -ForegroundColor Red; exit 1 }
 function AtlasSurumu {
   try { (Invoke-RestMethod http://127.0.0.1:4321/api/surum -TimeoutSec 3).commit } catch { $null }
 }
+# Atlas'ın bildirdiği kısa commit beklenenle aynı mı (kısa hash uzunlukları farklı olabilir).
+function SurumUyar($calisan, $beklenen) {
+  return [bool]($calisan -and $beklenen.StartsWith($calisan.Substring(0, [Math]::Min(7, $calisan.Length))))
+}
+# Atlas'ın verilen sürümle yanıt vermesini bekler; bulursa $true.
+function SurumBekle($beklenen, $saniye) {
+  for ($i = 0; $i -lt $saniye; $i++) {
+    Start-Sleep -Seconds 1
+    $script:calisan = AtlasSurumu
+    if (SurumUyar $script:calisan $beklenen) { return $true }
+  }
+  return $false
+}
 
 Baslik 'Ön kontrol'
 $kirli = git status --porcelain
@@ -42,7 +55,7 @@ $yeni = (git rev-parse HEAD).Trim()
 $kisa = $yeni.Substring(0, 7)
 if ($yeni -eq $onceki -and -not $Zorla) {
   $calisan = AtlasSurumu
-  if ($calisan -and $kisa.StartsWith($calisan.Substring(0, [Math]::Min(7, $calisan.Length)))) { Tamam "zaten güncel ve çalışıyor ($kisa)"; exit 0 }
+  if (SurumUyar $calisan $kisa) { Tamam "zaten güncel ve çalışıyor ($kisa)"; exit 0 }
   Write-Host "  Kod güncel ama çalışan sürüm farklı ($calisan) — yeniden başlatılıyor."
 }
 git --no-pager log --oneline "$onceki..$yeni"
@@ -56,15 +69,31 @@ if ($yeni -ne $onceki) {
 
 function GeriAl($neden) {
   Write-Host "`n  $neden — önceki sürüme dönülüyor…" -ForegroundColor Yellow
+  $eksik = @()
   git reset --hard --quiet $onceki
-  if ($kilitDegisti) { npm ci --no-fund --no-audit | Out-Null }
+  if ($LASTEXITCODE -ne 0) { $eksik += 'git reset' }
+  if ($kilitDegisti) {
+    pm2 stop proje-atlasi *> $null
+    npm ci --no-fund --no-audit | Out-Null
+    if ($LASTEXITCODE -ne 0) { $eksik += 'npm ci' }
+  }
   # Arayüz yalnız BU çalıştırmada değiştirildiyse geri alınır; yoksa dist-eski daha eski bir sürümdür.
   if ($script:distDegisti -and (Test-Path dist-eski)) {
-    if (Test-Path dist) { Remove-Item dist -Recurse -Force }
-    Rename-Item dist-eski dist
+    try {
+      if (Test-Path dist) { Remove-Item dist -Recurse -Force -ErrorAction Stop }
+      Rename-Item dist-eski dist -ErrorAction Stop
+    } catch { $eksik += "arayüz klasörü ($($_.Exception.Message))" }
   }
   pm2 startOrRestart ecosystem.config.cjs --update-env | Out-Null
-  Dur "Güncelleme geri alındı ($($onceki.Substring(0, 7)) çalışıyor). Sebep: $neden"
+  $kisaOnceki = $onceki.Substring(0, 7)
+  if (-not (SurumBekle $kisaOnceki 20)) { $eksik += "Atlas açılmadı (bildirilen: $script:calisan)" }
+  if ($eksik.Count) {
+    # Geri alma da yarım kaldı: "geri alındı" demek yanıltır.
+    Write-Host "  [DUR]   GERİ ALMA TAMAMLANAMADI: $($eksik -join ' · ')" -ForegroundColor Red
+    Write-Host "          İlk sebep: $neden — elle bak: git status · pm2 logs proje-atlasi --lines 40" -ForegroundColor Red
+    exit 2
+  }
+  Dur "Güncelleme geri alındı ($kisaOnceki çalışıyor). Sebep: $neden"
 }
 
 if ($kilitDegisti -or -not (Test-Path node_modules)) {
@@ -80,21 +109,21 @@ Baslik 'Arayüz'
 if (Test-Path dist-yeni) { Remove-Item dist-yeni -Recurse -Force }
 npm run build -- --outDir dist-yeni --emptyOutDir
 if ($LASTEXITCODE -ne 0) { if (Test-Path dist-yeni) { Remove-Item dist-yeni -Recurse -Force }; GeriAl 'derleme başarısız' }
-if (Test-Path dist-eski) { Remove-Item dist-eski -Recurse -Force }
-if (Test-Path dist) { Rename-Item dist dist-eski }
-Rename-Item dist-yeni dist
-$script:distDegisti = $true
+# Klasör değişimi denetlenir: Windows'ta açık bir tutamaç (Defender, Gezgin) Rename'i düşürebilir;
+# 'Continue' altında bu sessiz geçer ve Atlas dist'siz açılırdı (her sayfa 500).
+try {
+  if (Test-Path dist-eski) { Remove-Item dist-eski -Recurse -Force -ErrorAction Stop }
+  if (Test-Path dist) { Rename-Item dist dist-eski -ErrorAction Stop }
+  $script:distDegisti = $true
+  Rename-Item dist-yeni dist -ErrorAction Stop
+} catch { GeriAl "arayüz klasörü değiştirilemedi: $($_.Exception.Message)" }
+if (-not (Test-Path dist\index.html)) { GeriAl 'dist\index.html yok — derleme çıktısı eksik' }
 Tamam "derlendi ($kisa)"
 
 Baslik 'Yeniden başlatma'
 pm2 startOrRestart ecosystem.config.cjs --update-env | Out-Null
-$calisan = $null
-for ($i = 0; $i -lt 20; $i++) {
-  Start-Sleep -Seconds 1
-  $calisan = AtlasSurumu
-  if ($calisan -and $kisa.StartsWith($calisan.Substring(0, [Math]::Min(7, $calisan.Length)))) { break }
-}
-if (-not $calisan -or -not $kisa.StartsWith($calisan.Substring(0, [Math]::Min(7, $calisan.Length)))) { GeriAl "Atlas 20 sn içinde yeni sürümle açılmadı (bildirilen: $calisan)" }
+$script:calisan = $null
+if (-not (SurumBekle $kisa 20)) { GeriAl "Atlas 20 sn içinde yeni sürümle açılmadı (bildirilen: $script:calisan)" }
 pm2 save | Out-Null
 Tamam "Atlas $kisa ile çalışıyor"
 

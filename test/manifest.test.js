@@ -94,3 +94,26 @@ describe("ters bölü kaçışı", () => {
     expect(r.some((x) => x.startsWith("yayin.adimlar[0]: kontrol karakteri"))).toBe(true);
   });
 });
+
+describe("güvenli yayın kuralları", () => {
+  const proje = (ek) => ({ projeler: [{ id: "x", ad: "X", asama: "canli", ikon: "tool", konum: { x: 10, y: 10 }, ...ek }] });
+  const mesajlar = (m) => manifestDogrula(m).map((s) => `${s.seviye}: ${s.mesaj}`);
+
+  it("token'lı iç sağlık adresi bu makine dışında olamaz", () => {
+    expect(mesajlar(proje({ icSaglik: { url: "https://ornek.example/health", tokenEnv: "T" } })).join("\n")).toMatch(/hata: icSaglik.url bu makinenin adresi/);
+    expect(mesajlar(proje({ icSaglik: { url: "http://127.0.0.1:4000/api/health/detailed", tokenEnv: "T" } }))).toEqual([]);
+  });
+
+  it("git pull --ff-only'siz ve doğrudan migrate uyarı verir; dur boolean olmalı", () => {
+    const m = mesajlar(proje({ yayin: { adimlar: [
+      { yol: "", adim: "cd C:/x; git pull" },
+      { yol: "m/", adim: "cd C:/x; npm run migrate", dur: "evet" },
+      { yol: "m/", adim: "npm run migrate:verify", dur: true },
+    ] } }));
+    expect(m).toEqual([
+      expect.stringMatching(/uyari: yayin.adimlar\[0\]: git pull --ff-only/),
+      expect.stringMatching(/hata: yayin.adimlar\[1\]: dur true\/false/),
+      expect.stringMatching(/uyari: yayin.adimlar\[1\]: doğrudan migrate/),
+    ]);
+  });
+});

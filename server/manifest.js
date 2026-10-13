@@ -1,5 +1,6 @@
 // projeler.json elle düzenlenir: yazım hatası sessizce yanlış ekran üretmesin diye denetlenir.
 // Saf; test/manifest.test.js. Sonuç: [{ seviye: "hata" | "uyari", yer, mesaj }]
+import { loopbackMi } from "./icSaglik.js";
 import { kutuBul } from "./kutu.js";
 
 export const ASAMALAR = ["fikir", "gelistirme", "bekliyor", "canli", "beklemede"];
@@ -56,6 +57,7 @@ export function manifestDogrula(m, simdi = new Date()) {
 
     if (p?.icSaglik != null) {
       if (!urlMi(p.icSaglik.url)) ekle("hata", yer, "icSaglik.url geçerli bir http(s) adresi değil");
+      else if (p.icSaglik.tokenEnv != null && !loopbackMi(p.icSaglik.url)) ekle("hata", yer, "icSaglik.url bu makinenin adresi olmalı (127.0.0.1) — token dışarı gönderilmez");
       if (p.icSaglik.tokenEnv != null && !/^[A-Z_][A-Z0-9_]*$/.test(p.icSaglik.tokenEnv)) ekle("hata", yer, "icSaglik.tokenEnv BÜYÜK_HARF_ALT_ÇİZGİ bir ortam değişkeni adı olmalı (token'ın kendisi değil)");
     }
     if (p?.yayin != null) {
@@ -65,6 +67,9 @@ export function manifestDogrula(m, simdi = new Date()) {
         if (typeof k?.adim !== "string" || !k.adim.trim()) ekle("hata", yer, `yayin.adimlar[${j}]: adim boş`);
         else if (KONTROL_KARAKTERI.test(k.adim)) ekle("hata", yer, `yayin.adimlar[${j}]: ${KACIS_MESAJI}`);
         if (k?.yol != null && typeof k.yol !== "string") ekle("hata", yer, `yayin.adimlar[${j}]: yol metin olmalı`);
+        if (k?.dur != null && typeof k.dur !== "boolean") ekle("hata", yer, `yayin.adimlar[${j}]: dur true/false olmalı`);
+        if (typeof k?.adim === "string" && !k.bilgi && /\bgit pull\b(?![^;]*--ff-only)/.test(k.adim)) ekle("uyari", yer, `yayin.adimlar[${j}]: git pull --ff-only yaz — ayrışmış dalda birleştirme commit'i açıp devam etmesin`);
+        if (typeof k?.adim === "string" && /\bnpm run migrate\b(?!:)/.test(k.adim)) ekle("uyari", yer, `yayin.adimlar[${j}]: doğrudan migrate yerine önce migrate:verify (canlı defter bayat olabilir)`);
         if (typeof k?.yol === "string" && k.yol.startsWith("/")) ekle("uyari", yer, `yayin.adimlar[${j}]: yol repo köküne göredir, "/" ile başlamaz`);
       }
     }

@@ -83,7 +83,9 @@ olay sayısı. Yeniden başlatma aynı gün ikinci kez göndermez (`data/ozet.js
 
 İkisinden biri boşsa Telegram kapalıdır ve hiçbir şey dışarı gitmez. Kurulum denetimi
 "Telegram bildirimi" satırında botun adını ve sohbeti gösterir. Mesajda proje adları ve
-olay metinleri (ör. "siparis-backend durdu") gider; log satırı, token, parola gitmez.
+olay metinleri (ör. "siparis-backend durdu") gider; log satırı, token, parola gitmez. İç sağlık
+notu (DB hata metni), kurulum denetimi ayrıntısı (git çıktısı) ve GitHub hata ayrıntısı da evde
+kalır — özette yalnız başlığı yazılır ("ERP veritabanı yanıt vermiyor").
 
 ## İç sağlık (veritabanı, ERP, migration defteri)
 
@@ -112,18 +114,26 @@ proje detayında **CANLIYA BEKLEYEN** kutusu çıkar: hangi commitler, kaç dosy
 çıkarılan **sıralı yayın adımları** (her biri kopyalanabilir komut). Kurallar `projeler.json` →
 `yayin.adimlar`'dadır; örneğin Rosbel için:
 
-1. `cd C:/SiparisOnayProjesi; git pull` (her zaman)
+1. `cd C:/SiparisOnayProjesi; git pull --ff-only` (her zaman; ayrışmış dalda durur, birleştirme açmaz)
 2. `backend/package*.json` değiştiyse `npm install` (npm ci değil)
-3. `backend/migrations/` değiştiyse `npm run migrate:verify` — **doğrudan `npm run migrate` değil**:
+3. `backend/migrations/` değiştiyse `npm run migrate:verify` — **karar noktası** (`dur: true`);
+   **doğrudan `npm run migrate` değil**:
    canlıdaki `_migrations` defteri bayat olabilir (elle uygulanmış dosyalar "bekliyor" görünür).
    ELLE çıkanlar `npm run migrate:verify -- --isaretle` ile deftere yazılır, ancak sonra
    yalnız BEKLİYOR kalanlar için `npm run migrate`.
 4. `backend/` değiştiyse `pm2 restart siparis-backend --update-env`
 5. Yalnız `frontend/` değiştiyse: "Vercel'de, sunucuda iş yok"
 
-Mutabiko'da web değişikliği build'den önce `pm2 stop mutabiko-web` ile başlar (ISR tuzağı);
-Atlas'ın kendisi için tek adım `scripts/guncelle.ps1`. Kopyaladığın komutu kendin çalıştırırsın —
-Atlas hiçbir şeyi kendiliğinden yayınlamaz.
+**Toplu kopya** tek satır PowerShell zinciridir: `a; if ($?) { b; if ($?) { c } }` — bir adım hata
+verirse (çakışan pull, başarısız npm) sonrakiler çalışmaz (5.1'de `&&` yok; alt alta yapıştırılan
+satırlar öncekinin hatasına bakmadan çalışırdı). Zincir **karar noktasında biter**: migrate:verify'ın
+çıktısı okunmadan pm2 restart yeni kodu canlıya almaz; kalan adımlar "kalanını kopyala" ile ayrı alınır.
+Manifest denetimi `--ff-only`'siz `git pull`'u ve doğrudan `npm run migrate`'i uyarıyla işaretler.
+
+Mutabiko'da web değişikliği build'den önce `pm2 stop mutabiko-web` ile başlar (ISR tuzağı), derleme
+bozulursa yarım `.next` ile açılmaz; API `npm ci`'dan sonra migration kararına kadar kapalı kalır,
+yeniden başlatma adımında açılır. Atlas'ın kendisi için tek adım `scripts/guncelle.ps1`.
+Kopyaladığın komutu kendin çalıştırırsın — Atlas hiçbir şeyi kendiliğinden yayınlamaz.
 
 ## Giriş
 

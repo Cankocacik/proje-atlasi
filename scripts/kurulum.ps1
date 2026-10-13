@@ -76,7 +76,8 @@ if ((Test-Path dist\index.html) -and $derleme -and ($head.StartsWith($derleme) -
 Baslik '.env'
 $envYolu = Join-Path $Kok '.env'
 if (-not (Test-Path $envYolu)) { Copy-Item (Join-Path $Kok '.env.example') $envYolu -ErrorAction Stop; Tamam '.env örnekten oluşturuldu' }
-$satirlar = @(Get-Content $envYolu)
+# PS 5.1 Get-Content BOM'suz dosyayı ANSI okur: Türkçe açıklama satırları geri yazarken bozulurdu.
+$satirlar = @(Get-Content $envYolu -Encoding UTF8)
 $sir = ($satirlar | Where-Object { $_ -match '^ATLAS_OTURUM_SIRRI=(.*)$' } | ForEach-Object { $Matches[1].Trim() }) -join ''
 if ($sir.Length -ge 32) {
   Tamam 'oturum sırrı var'
@@ -139,8 +140,11 @@ if ($TuneliAtla) {
   }
 
   if ($degisti) {
-    $servis = Get-Service | Where-Object { $_.Name -like '*cloudflared*' } | Select-Object -First 1
-    if (-not $servis) { Dur 'Cloudflared servisi bulunamadı' }
+    # Yalnız BU config'i çalıştıran servis: adı *cloudflared* olan başka bir tünel yeniden başlatılmasın.
+    $servisler = @(Get-CimInstance Win32_Service | Where-Object { $_.PathName -and $_.PathName.Replace('/', '\').ToLower().Contains($cfg.Replace('/', '\').ToLower()) })
+    if ($servisler.Count -eq 0) { Dur "config.yml'yi ($cfg) çalıştıran servis bulunamadı — tüneli elle yeniden başlat" }
+    if ($servisler.Count -gt 1) { Dur "Aynı config'i çalıştıran $($servisler.Count) servis var ($(($servisler | ForEach-Object Name) -join ', ')) — elle yeniden başlat" }
+    $servis = $servisler[0]
     Write-Host "  Tünel servisi yeniden başlıyor — api.rosbelportal.com birkaç saniye kesilir…"
     Restart-Service $servis.Name -ErrorAction Stop
     Start-Sleep -Seconds 8
