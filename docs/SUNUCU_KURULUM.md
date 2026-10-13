@@ -65,6 +65,22 @@ erişim** (Cloudflare'in kendi 404'ü = tünel kuralı yok; 530 = tünel kapalı
 Atlas açılışta ve 30 dakikada bir kendini denetler; hata çıkarsa haritadaki **Proje Atlası**
 düğümü kırmızıya döner ve olay günlüğüne yazılır. Her satır sorunu çözecek komutu da söyler.
 
+## Telegram bildirimi (isteğe bağlı)
+
+Tarayıcı bildirimi yalnız sayfa açıkken gelir. Sayfa kapalıyken de haber almak için Telegram:
+site düştü/kalktı, süreç durdu/yeniden çalışıyor, iç sağlık bozuldu/düzeldi, kurulum denetimi
+sorun buldu/temizlendi. Yeni commit, canlıya alma ve Atlas açılışı **gönderilmez** (olay
+günlüğünde durur). Aynı taramadaki olaylar tek mesajda; saatte en çok 20 mesaj.
+
+1. Telegram'da **@BotFather** → `/newbot` → verdiği token'ı `.env` → `ATLAS_TELEGRAM_TOKEN=`.
+2. Telegram'da yeni bota bir mesaj at (ya da botu bir gruba ekleyip grupta yaz).
+3. `npm run telegram` → listelenen kendi sohbet kimliğini `.env` → `ATLAS_TELEGRAM_SOHBET=`.
+4. `pm2 restart proje-atlasi` → ekranda Olay günlüğü → **Telegram'a deneme**.
+
+İkisinden biri boşsa Telegram kapalıdır ve hiçbir şey dışarı gitmez. Kurulum denetimi
+"Telegram bildirimi" satırında botun adını ve sohbeti gösterir. Mesajda proje adları ve
+olay metinleri (ör. "siparis-backend durdu") gider; log satırı, token, parola gitmez.
+
 ## İç sağlık (veritabanı, ERP, migration defteri)
 
 Atlas sunucuda, uygulamaların kendi ayrıntılı sağlık ucunu loopback'ten okur

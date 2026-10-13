@@ -8,6 +8,7 @@ interface Props {
   sec: (id: string) => void;
   izin: NotificationPermission | "yok";
   izinIste: () => void;
+  bildirimDene: () => Promise<string>;
 }
 
 const TUR_AD: Record<string, string> = {
@@ -22,8 +23,10 @@ const TUR_AD: Record<string, string> = {
 
 const sorunMu = (o: Olay) => o.seviye === "hata" || o.seviye === "uyari";
 
-export function Olaylar({ veri, simdi, sec, izin, izinIste }: Props) {
+export function Olaylar({ veri, simdi, sec, izin, izinIste, bildirimDene }: Props) {
   const [yalnizSorun, setYalnizSorun] = useState(false);
+  const [deneme, setDeneme] = useState<string | null>(null);
+  const telegram = veri.bildirimKanali?.telegram;
   const byId = new Map(veri.projeler.map((p) => [p.id, p]));
   const tumu = veri.olaylar ?? [];
   const liste = yalnizSorun ? tumu.filter(sorunMu) : tumu;
@@ -41,7 +44,14 @@ export function Olaylar({ veri, simdi, sec, izin, izinIste }: Props) {
               Bildirimleri aç
             </button>
           )}
-          {izin === "granted" && <span className="mono sessiz olay-izin">bildirim açık</span>}
+          {izin === "granted" && <span className="mono sessiz olay-izin">tarayıcı bildirimi açık</span>}
+          {telegram ? (
+            <button type="button" className="fbtn" title="Sayfa kapalıyken de düşüş/geri geliş Telegram'a gider" onClick={async () => setDeneme(await bildirimDene())}>
+              {deneme ?? "Telegram'a deneme"}
+            </button>
+          ) : (
+            <span className="mono sessiz olay-izin" title="Sayfa kapalıyken bildirim için: .env ATLAS_TELEGRAM_TOKEN + ATLAS_TELEGRAM_SOHBET (npm run telegram)">Telegram kapalı</span>
+          )}
           <div className="seg" role="group" aria-label="Olayları süz">
             <button type="button" className={`seg-btn${!yalnizSorun ? " on" : ""}`} aria-pressed={!yalnizSorun} onClick={() => setYalnizSorun(false)}>Tümü</button>
             <button type="button" className={`seg-btn${yalnizSorun ? " on" : ""}`} aria-pressed={yalnizSorun} onClick={() => setYalnizSorun(true)}>Sorunlar</button>

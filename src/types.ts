@@ -115,6 +115,7 @@ export interface Anlik {
   atlas?: AtlasBilgi | null;
   denetim?: Denetim | null;
   olaylar?: Olay[];
+  bildirimKanali?: { telegram: boolean };
 }
 
 /** Son 24 saatin 30'ar dakikalık kutuları: ok · kismi (bazısı düştü) · hata · null (veri yok). */

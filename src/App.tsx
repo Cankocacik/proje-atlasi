@@ -21,7 +21,7 @@ const FILTRELER: { id: Filtre; ad: string; uyar: (p: Proje) => boolean }[] = [
 ];
 
 export function App() {
-  const { oturum, girisGerekli, girisTuru, giris, cikis, veri, bagli, hata, simdi, tara, taraniyor, adimIsaretle, repoAc, loglar, logYukle, denetle, denetleniyor } = useAtlas();
+  const { oturum, girisGerekli, girisTuru, giris, cikis, veri, bagli, hata, simdi, tara, taraniyor, adimIsaretle, repoAc, loglar, logYukle, denetle, denetleniyor, bildirimDene } = useAtlas();
   const [secili, setSecili] = useState<string | null>(null);
   const [filtre, setFiltre] = useState<Filtre>("hepsi");
   const [arama, setArama] = useState("");
@@ -95,7 +95,7 @@ export function App() {
               </> : <Liste veri={veri} sec={setSecili} eslesir={eslesir} simdi={simdi} />}
               {sonucSayisi === 0 && <p className="harita-bos" role="status">Bu süzgece uyan proje yok. <button type="button" onClick={() => { setFiltre("hepsi"); setArama(""); }}>Süzgeçleri temizle</button></p>}
             </section>
-            <Olaylar veri={veri} simdi={simdi} sec={setSecili} izin={izin} izinIste={izinIste} />
+            <Olaylar veri={veri} simdi={simdi} sec={setSecili} izin={izin} izinIste={izinIste} bildirimDene={bildirimDene} />
             <Adimlar veri={veri} isaretle={adimIsaretle} />
             <YayinHatti veri={veri} sec={setSecili} />
             <Loglar veri={veri} loglar={loglar} logYukle={logYukle} />

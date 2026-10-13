@@ -11,8 +11,8 @@ export function yeniOlaylar(olaylar: Olay[] | undefined, sonGorulen: number | nu
   return { yeniler: liste.filter((o) => o.id > sonGorulen).sort((a, b) => a.id - b.id), enBuyuk };
 }
 
-/** Bildirim yalnız durum değişimi önemliyse: düşüş/durma ve geri geliş. */
-export const bildirilir = (o: Olay) => o.seviye === "hata" || (o.seviye === "iyi" && (o.tur === "site" || o.tur === "surec"));
+// Bildirim kuralı sunucuyla ortak (Telegram da aynısını kullanır).
+export { bildirilir } from "../../server/bildirim.js";
 
 export function olayZamani(iso: string, simdi: Date): string {
   const d = new Date(iso);

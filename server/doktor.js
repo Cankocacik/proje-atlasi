@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { icSaglikOku } from "./icSaglik.js";
 import { manifestDogrula } from "./manifest.js";
 import { pm2Listesi } from "./pm2.js";
+import { telegramAyari, telegramBot } from "./telegram.js";
 
 // — saf yardımcılar (test/doktor.test.js) —
 
@@ -184,6 +185,17 @@ export async function doktor({ ayar, manifest, kok, fetchFn = fetch, pm2Fn = pm2
         : { durum: "ok", mesaj: `${s.durum} · ${s.kontroller.length} kontrol${s.migration ? ` · defterde ${s.migration.bekleyen} bekleyen migration` : ""}` };
     }));
   }
+
+  kontroller.push(zamanli("Telegram bildirimi", async () => {
+    const t = telegramAyari();
+    if (!t) return { durum: "atla", mesaj: "kapalı — sayfa kapalıyken bildirim için .env ATLAS_TELEGRAM_TOKEN + ATLAS_TELEGRAM_SOHBET" };
+    try {
+      const bot = await telegramBot(t, fetchFn);
+      return { durum: "ok", mesaj: `açık · @${bot?.username ?? "bot"} → sohbet ${t.sohbet}` };
+    } catch (e) {
+      return { durum: "hata", mesaj: e.message, cozum: "Token'ı @BotFather'dan doğrula; sohbet kimliği için npm run telegram" };
+    }
+  }));
 
   kontroller.push(zamanli("pm2", async () => {
     const liste = await pm2Fn();
