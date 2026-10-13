@@ -74,7 +74,10 @@ proje detayında **CANLIYA BEKLEYEN** kutusu çıkar: hangi commitler, kaç dosy
 
 1. `cd C:/SiparisOnayProjesi; git pull` (her zaman)
 2. `backend/package*.json` değiştiyse `npm install` (npm ci değil)
-3. `backend/migrations/` değiştiyse `npm run migrate:status; npm run migrate`
+3. `backend/migrations/` değiştiyse `npm run migrate:verify` — **doğrudan `npm run migrate` değil**:
+   canlıdaki `_migrations` defteri bayat olabilir (elle uygulanmış dosyalar "bekliyor" görünür).
+   ELLE çıkanlar `npm run migrate:verify -- --isaretle` ile deftere yazılır, ancak sonra
+   yalnız BEKLİYOR kalanlar için `npm run migrate`.
 4. `backend/` değiştiyse `pm2 restart siparis-backend --update-env`
 5. Yalnız `frontend/` değiştiyse: "Vercel'de, sunucuda iş yok"
 

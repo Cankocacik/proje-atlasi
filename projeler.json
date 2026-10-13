@@ -67,8 +67,8 @@
           },
           {
             "yol": "backend/migrations/",
-            "adim": "cd C:/SiparisOnayProjesi/backend; npm run migrate:status; npm run migrate",
-            "not": "önce durum, sonra uygula"
+            "adim": "cd C:/SiparisOnayProjesi/backend; npm run migrate:verify",
+            "not": "Defter (_migrations) bayat olabilir: ELLE çıkanları `npm run migrate:verify -- --isaretle` ile deftere yaz, ancak sonra yalnız BEKLİYOR kalanlar için `npm run migrate`. Doğrudan migrate, elle uygulanmışı ikinci kez çalıştırır."
           },
           {
             "yol": "backend/",
@@ -139,8 +139,8 @@
           },
           {
             "yol": "api/migrations/",
-            "adim": "cd C:/mutabik/api; npm run migrate:status; npm run migrate",
-            "not": "önce durum, sonra uygula"
+            "adim": "cd C:/mutabik/api; npm run migrate:verify",
+            "not": "Defter (_migrations) bayat olabilir: ELLE çıkanları `npm run migrate:verify -- --isaretle` ile deftere yaz, ancak sonra yalnız BEKLİYOR kalanlar için `npm run migrate`. Doğrudan migrate, elle uygulanmışı ikinci kez çalıştırır."
           },
           {
             "yol": "api/",
