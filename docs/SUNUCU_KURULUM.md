@@ -77,6 +77,10 @@ günlüğünde durur). Aynı taramadaki olaylar tek mesajda; saatte en çok 20 m
 3. `npm run telegram` → listelenen kendi sohbet kimliğini `.env` → `ATLAS_TELEGRAM_SOHBET=`.
 4. `pm2 restart proje-atlasi` → ekranda Olay günlüğü → **Telegram'a deneme**.
 
+**Günlük özet** (isteğe bağlı): `.env` → `ATLAS_TELEGRAM_OZET=08:30` — her gün o saatte tek mesaj:
+dikkat bekleyenler, canlıya bekleyen commitler, erişimi %100'ün altında kalan siteler, son 24 saatin
+olay sayısı. Yeniden başlatma aynı gün ikinci kez göndermez (`data/ozet.json`).
+
 İkisinden biri boşsa Telegram kapalıdır ve hiçbir şey dışarı gitmez. Kurulum denetimi
 "Telegram bildirimi" satırında botun adını ve sohbeti gösterir. Mesajda proje adları ve
 olay metinleri (ör. "siparis-backend durdu") gider; log satırı, token, parola gitmez.

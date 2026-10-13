@@ -1,16 +1,18 @@
 import { spawn } from "node:child_process";
 import { watch } from "node:fs";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { bildirilir } from "./bildirim.js";
 import { doktor } from "./doktor.js";
 import { saglikGecmisi } from "./gecmis.js";
 import { cerezOku, denemeSiniri, jetonCoz, jetonUret, parolaDogru } from "./kimlik.js";
 import { olayDeposu, olaylariBul } from "./olaylar.js";
 import { ortamOku } from "./ortam.js";
-import { portalGirisi } from "./portalGiris.js";
+import { gunAnahtari, gunlukOzet, ozetZamaniMi, saatCoz } from "./ozet.js";
 import { logIzleyici, pm2Listesi, yenidenBaslamaIzleyici } from "./pm2.js";
+import { portalGirisi } from "./portalGiris.js";
 import { atlasSurumu } from "./surum.js";
-import { bildirilir } from "./bildirim.js";
 import { kisici, mesajMetni, telegramAyari, telegramGonder } from "./telegram.js";
 import { adimIsaretle, manifestOku, MANIFEST_YOLU, topla } from "./topla.js";
 
@@ -93,6 +95,32 @@ export function apiOlustur(ayar = ortamOku()) {
   const olaylar = olayDeposu({ dosya: join(VERI, "olaylar.json") });
   const telegram = telegramAyari();
   const telegramKisici = kisici();
+
+  /**
+   * Günlük özet (isteğe bağlı): .env ATLAS_TELEGRAM_OZET=08:30 ve Telegram açıksa, her gün o saatten
+   * sonraki ilk dakikada bir kez. Son gönderim günü data/ozet.json'da: yeniden başlatma iki kez göndermez.
+   */
+  function gunlukOzetiKur() {
+    const hedef = saatCoz(process.env.ATLAS_TELEGRAM_OZET);
+    if (!telegram || !hedef) return;
+    const dosya = join(VERI, "ozet.json");
+    let sonGonderilen;
+    const kontrol = async () => {
+      sonGonderilen ??= await readFile(dosya, "utf8").then((s) => JSON.parse(s).son ?? null).catch(() => null);
+      if (!son || !ozetZamaniMi(hedef, sonGonderilen)) return;
+      const bugun = gunAnahtari(new Date());
+      sonGonderilen = bugun; // gönderim sürerken bir sonraki dakika tekrar denemesin
+      try {
+        await telegramGonder(telegram, gunlukOzet(son, { host: ayar.host }));
+        await mkdir(VERI, { recursive: true });
+        await writeFile(dosya, JSON.stringify({ son: bugun }), "utf8");
+      } catch (e) {
+        sonGonderilen = null; // bir dakika sonra yeniden dener
+        console.error(`[atlas] günlük özet gönderilemedi: ${e.message}`);
+      }
+    };
+    zamanlayicilar.push(setInterval(() => kontrol().catch(() => {}), 60_000));
+  }
 
   /** Olayı günlüğe yazar; bildirilir olanlar (Telegram açıksa) tek mesajda gönderilir. */
   async function olayEkle(liste) {
@@ -179,6 +207,7 @@ export function apiOlustur(ayar = ortamOku()) {
         // manifest bozuksa yenile() hatayı ekrana taşır
       }
       atlasBilgi = await atlasSurumu(KOK);
+      gunlukOzetiKur();
       await olayEkle([{ seviye: "bilgi", tur: "atlas", metin: `Atlas başlatıldı (${atlasBilgi.commit ?? "sürüm bilinmiyor"} · ${ayar.ortam})` }]);
       // Denetim dışarıya istek atar; açılışı bekletmesin, bitince ekran tazelenir.
       denetle().then(() => yenile());

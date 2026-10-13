@@ -5,6 +5,7 @@ import { execFile } from "node:child_process";
 import { lookup } from "node:dns/promises";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { icSaglikOku } from "./icSaglik.js";
 import { manifestDogrula } from "./manifest.js";
@@ -49,6 +50,16 @@ export function disErisimYorumu({ kod, atlasBasligi, govde }) {
   return { durum: "uyari", mesaj: `beklenmeyen yanıt (${kod})` };
 }
 
+/** pm2 dump dosyasındaki süreç adları (pm2 save'in yazdığı liste). Bozuk/boşsa null. */
+export function dumpAdlari(metin) {
+  try {
+    const liste = JSON.parse(metin);
+    return Array.isArray(liste) ? liste.map((p) => p?.name).filter(Boolean) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function ozetle(sonuclar) {
   const say = (d) => sonuclar.filter((s) => s.durum === d).length;
   return { ok: say("ok"), uyari: say("uyari"), hata: say("hata"), atla: say("atla") };
@@ -75,7 +86,12 @@ async function zamanli(ad, fn) {
  * ayar: ortamOku() çıktısı · manifest: projeler.json · kok: Atlas klasörü
  * Bağımlılıklar test için değiştirilebilir.
  */
-export async function doktor({ ayar, manifest, kok, fetchFn = fetch, pm2Fn = pm2Listesi, dnsFn = lookup, cloudflaredConfig = process.env.ATLAS_CLOUDFLARED_CONFIG ?? "C:/cloudflared/config.yml" }) {
+export async function doktor({
+  ayar, manifest, kok, fetchFn = fetch, pm2Fn = pm2Listesi, dnsFn = lookup,
+  cloudflaredConfig = process.env.ATLAS_CLOUDFLARED_CONFIG ?? "C:/cloudflared/config.yml",
+  // pm2 Windows hizmeti olarak kuruluysa PM2_HOME farklıdır (ör. C:\ProgramData\pm2\home); süreç onu miras alır.
+  pm2Ev = process.env.PM2_HOME ?? join(homedir(), ".pm2"),
+}) {
   const sunucu = ayar.ortam === "sunucu";
   const projeler = manifest?.projeler ?? [];
   const kontroller = [];
@@ -207,6 +223,22 @@ export async function doktor({ ayar, manifest, kok, fetchFn = fetch, pm2Fn = pm2
     if (durmus.length) return { durum: "hata", mesaj: `çalışmayan süreç: ${durmus.join(", ")}`, cozum: "pm2 logs <ad> --lines 50" };
     return { durum: "ok", mesaj: `${liste.length} süreç, hepsi online` };
   }));
+
+  if (sunucu) {
+    kontroller.push(zamanli("pm2 kaydı (yeniden başlatma)", async () => {
+      const liste = await pm2Fn();
+      if (!liste) return { durum: "atla", mesaj: "pm2 okunamadı" };
+      const dosya = join(pm2Ev, "dump.pm2");
+      const metin = await readFile(dosya, "utf8").catch(() => null);
+      if (metin === null) return { durum: "uyari", mesaj: `${dosya} yok — pm2 save hiç yapılmamış`, cozum: "pm2 save" };
+      const kayitli = dumpAdlari(metin);
+      if (!kayitli) return { durum: "uyari", mesaj: "dump.pm2 okunamadı", cozum: "pm2 save" };
+      const eksik = liste.map((s) => s.ad).filter((ad) => !kayitli.includes(ad));
+      return eksik.length
+        ? { durum: "uyari", mesaj: `kaydedilmemiş süreç: ${eksik.join(", ")} — sunucu yeniden başlarsa açılmaz`, cozum: "pm2 save" }
+        : { durum: "ok", mesaj: `${kayitli.length} süreç kayıtlı (pm2 resurrect hepsini açar)` };
+    }));
+  }
 
   if (sunucu && ayar.host) {
     kontroller.push(zamanli("Cloudflare tüneli", async () => {

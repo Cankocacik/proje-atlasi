@@ -200,3 +200,29 @@ describe("iç sağlık olayları", () => {
     expect(olaylariBul(sonra, once)[0]).toMatchObject({ seviye: "iyi", metin: "Rosbel Portal: iç sağlık düzeldi" });
   });
 });
+
+describe("pm2 kaydı", async () => {
+  const { dumpAdlari } = await import("../server/doktor.js");
+  it("dump.pm2'den adları okur; bozuksa null", () => {
+    expect(dumpAdlari(JSON.stringify([{ name: "siparis-backend" }, { name: "proje-atlasi" }, {}]))).toEqual(["siparis-backend", "proje-atlasi"]);
+    expect(dumpAdlari("{bozuk")).toBeNull();
+    expect(dumpAdlari("{}")).toBeNull();
+  });
+
+  it("çalışıp kaydedilmemiş süreci uyarır", async () => {
+    const { writeFile } = await import("node:fs/promises");
+    const ev = await mkdtemp(join(tmpdir(), "atlas-pm2ev-"));
+    await writeFile(join(ev, "dump.pm2"), JSON.stringify([{ name: "siparis-backend" }]));
+    const { sonuclar } = await doktor({
+      ayar: { ortam: "sunucu", host: null, oturumSirri: "x".repeat(40), portalEposta: null, parolaOzeti: "scrypt$a$b" },
+      manifest: { projeler: [] },
+      kok: ev,
+      fetchFn: async () => ({ status: 200, json: async () => ({}), headers: { get: () => null } }),
+      pm2Fn: async () => [{ ad: "siparis-backend", durum: "online" }, { ad: "proje-atlasi", durum: "online" }],
+      pm2Ev: ev,
+    });
+    const s = sonuclar.find((x) => x.ad === "pm2 kaydı (yeniden başlatma)");
+    expect(s).toMatchObject({ durum: "uyari", cozum: "pm2 save" });
+    expect(s.mesaj).toContain("proje-atlasi");
+  });
+});
