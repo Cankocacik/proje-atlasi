@@ -64,6 +64,8 @@ createServer((req, res) => {
   api.isle(req, res, () => statikSun(req, res));
 }).listen(PORT, "127.0.0.1", () => {
   console.log(`Proje Atlası (${ayar.ortam}) → http://127.0.0.1:${PORT}${ayar.host ? ` · dış adres: https://${ayar.host}` : ""}`);
+  // İzleme açılışta başlar: kimse sayfayı açmasa da olay günlüğü, erişim geçmişi ve log sayaçları işler.
+  api.baslat().catch((e) => console.error(`[atlas] izleme başlatılamadı: ${e.message}`));
   if (ayar.host && !ayar.portalEposta && !ayar.parolaOzeti) console.warn("[atlas] UYARI: giriş ayarı yok — dışarıdan giriş kapalı kalır.");
   if (ayar.portalEposta) console.log(`[atlas] giriş: portal kullanıcısı (${ayar.portalGirisUrl})`);
 });

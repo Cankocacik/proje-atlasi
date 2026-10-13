@@ -318,3 +318,10 @@ textarea.alan { padding: 10px 12px; resize: vertical; }
 .ic-saglik li.bozuk { color: #f1b7a6; } .ic-saglik li.bozuk .ic-isaret { color: #f67f65; }
 .ic-saglik li.bekliyor .ic-isaret { color: var(--warn); }
 .ic-saglik code { font: 10px var(--mono); color: var(--yazi-2); }
+
+/* Sık hatalar (log paneli) */
+.sik-hatalar { display: flex; flex-direction: column; gap: 5px; padding: 0 16px 12px; }
+.sik-hata { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px; align-items: center; text-align: left; padding: 6px 9px; border-radius: 6px; border: 1px solid #f67f6533; background: #f67f6508; color: #f1b7a6; font-size: 11.5px; }
+.sik-hata:hover { border-color: #f67f6577; }
+.sik-hata-sayi { color: #f67f65; font-weight: 600; font-size: 11px; }
+.sik-hata-metin { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 11px; }

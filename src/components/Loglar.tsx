@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Anlik, LogSatiri, Surec } from "../types";
 import { Svg } from "./Ikon";
+import { hataOzeti } from "../lib/hataOzeti";
+
+/** İmzanın ilk değişken yerine kadarki kısmı: aramada aynı hatanın tüm tekrarlarını yakalar. */
+const aramaParcasi = (imza: string, ornek: string) => (imza.split("‹")[0].trim() || ornek).slice(0, 60);
 
 /** Görünen satırları (süzgeçler uygulanmış) düz metin .log olarak indirir. */
 function indir(surec: string, satirlar: LogSatiri[]) {
@@ -26,8 +30,9 @@ function sureMetni(sn: number) {
   return `${Math.floor(sn / 86400)} gün`;
 }
 
+// Paletteki mavi "geliştirmede" demek; sorunlu süreç (durmuş, hata yağan, yeniden başlayan) turuncu.
 const surecDurumu = (s: Surec) =>
-  s.durum !== "online" ? "warn" : s.hata15 >= 10 || s.sonSaatYenidenBaslama > 0 ? "dev" : "live";
+  s.durum !== "online" || s.hata15 >= 10 || s.sonSaatYenidenBaslama > 0 ? "warn" : "live";
 
 export function Loglar({ veri, loglar, logYukle }: Props) {
   const surecler = veri.surecler;
@@ -42,6 +47,8 @@ export function Loglar({ veri, loglar, logYukle }: Props) {
   useEffect(() => {
     if (aktif && !loglar[aktif]) logYukle(aktif);
   }, [aktif]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const sikHatalar = useMemo(() => hataOzeti((aktif && loglar[aktif]) || [], 3), [aktif, loglar]);
 
   const satirlar = useMemo(() => {
     const kaynak = (aktif && loglar[aktif]) || [];
@@ -102,6 +109,28 @@ export function Loglar({ veri, loglar, logYukle }: Props) {
               <Svg ad="indir" boyut={14} />İndir
             </button>
           </div>
+
+          {sikHatalar.length > 0 && (
+            <div className="sik-hatalar" aria-label="Sık hatalar">
+              <span className="etiketcik">SIK HATALAR</span>
+              {sikHatalar.map((g) => (
+                <button
+                  key={g.imza}
+                  type="button"
+                  className="sik-hata"
+                  title={`Örnek: ${g.ornek}\nTıkla: logda bu hatayı süz`}
+                  onClick={() => {
+                    setYalnizHata(true);
+                    setArama(aramaParcasi(g.imza, g.ornek));
+                  }}
+                >
+                  <span className="mono sik-hata-sayi">×{g.sayi}</span>
+                  <span className="sik-hata-metin">{g.imza}</span>
+                  {g.son && <span className="mono sessiz">{new Date(g.son).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</span>}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div ref={kutu} className="log-kutu" role="log" aria-live="off" onScroll={(e) => {
             const el = e.currentTarget;

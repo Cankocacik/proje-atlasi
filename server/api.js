@@ -309,5 +309,5 @@ export function apiOlustur(ayar = ortamOku()) {
     istemciler.clear();
   }
 
-  return { isle, durdur, yenile };
+  return { isle, durdur, yenile, baslat };
 }
