@@ -18,11 +18,17 @@ export function ProjeIkon({ tur, boyut = 20 }: { tur: IkonTur; boyut?: number })
   }
 }
 
-type SvgAd = "ev" | "harita" | "hat" | "nabiz" | "liste" | "yenile" | "arti" | "eksi" | "uyari" | "kod" | "dis";
+type SvgAd = "ev" | "harita" | "hat" | "nabiz" | "liste" | "yenile" | "arti" | "eksi" | "uyari" | "kod" | "dis" | "ara" | "klasor" | "gorev";
 
 export function Svg({ ad, boyut = 18 }: { ad: SvgAd; boyut?: number }) {
   const p = { width: boyut, height: boyut, viewBox: "0 0 24 24", "aria-hidden": true, ...ORTAK, strokeWidth: 1.8 };
   switch (ad) {
+    case "ara":
+      return <svg {...p}><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>;
+    case "klasor":
+      return <svg {...p}><path d="M3 7V5a2 2 0 0 1 2-2h5l3 4h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" /></svg>;
+    case "gorev":
+      return <svg {...p}><rect x="3" y="3" width="18" height="18" rx="3" /><path d="m7 12 3 3 7-7" /></svg>;
     case "ev":
       return <svg {...p}><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></svg>;
     case "harita":
@@ -51,11 +57,9 @@ export function Svg({ ad, boyut = 18 }: { ad: SvgAd; boyut?: number }) {
 export function RadarLogo({ boyut = 38 }: { boyut?: number }) {
   return (
     <svg width={boyut} height={boyut} viewBox="0 0 42 42" fill="none" aria-hidden="true">
-      <circle cx="21" cy="21" r="19" stroke="#2A3444" strokeWidth="1.5" />
-      <circle cx="21" cy="21" r="11" stroke="#2A3444" strokeWidth="1.5" />
-      <path d="M21 21 L21 2 A19 19 0 0 1 38 13 Z" fill="var(--acc)" fillOpacity=".28" />
-      <circle cx="21" cy="21" r="3.5" fill="var(--acc)" />
-      <circle cx="31" cy="11" r="2.2" fill="var(--live)" />
+      <circle cx="21" cy="21" r="11" stroke="var(--acc)" strokeWidth="1.7" />
+      <ellipse cx="21" cy="21" rx="21" ry="7" transform="rotate(-32 21 21)" stroke="var(--acc)" strokeWidth="1.7" />
+      <circle cx="34" cy="10" r="2.5" fill="var(--acc)" />
     </svg>
   );
 }

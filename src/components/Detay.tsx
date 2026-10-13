@@ -1,6 +1,8 @@
 import type { Anlik, Proje } from "../types";
 import { durumEtiketi } from "../lib/etiket";
-import { gunFarki, goreli, tarihSaat } from "../lib/zaman";
+import { goreli, tarihSaat } from "../lib/zaman";
+import { ASAMA_ETIKET } from "../lib/etiket";
+import { projeIlerlemesi, projeKapsami } from "../lib/ilerleme";
 import { ProjeIkon, Svg } from "./Ikon";
 
 interface Props {
@@ -24,11 +26,11 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
     ...veri.akislar.filter((a) => a.hedef === p.id).map((a) => byId.get(a.kaynak)),
   ].filter((x, i, arr): x is Proje => Boolean(x) && arr.findIndex((y) => y?.id === x!.id) === i);
 
-  const kapsam = new Set([p.id, ...cocuklar.map((c) => c.id)]);
-  const commitler = veri.akis.filter((c) => c.projeId && kapsam.has(c.projeId)).slice(0, 6);
+  const kapsam = projeKapsami(veri.projeler, p.id);
+  const commitler = veri.akis.filter((c) => c.projeId && kapsam.has(c.projeId)).slice(0, 4);
+  const ilerleme = projeIlerlemesi(veri, p.id);
 
   const son = p.git?.son;
-  const gun = son ? gunFarki(son.tarih, simdi) : null;
   const saglikMetni = !p.saglik
     ? "izlenmiyor"
     : p.saglik.ok
@@ -43,7 +45,7 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <span className="ico" style={{ width: 60, height: 60, borderRadius: 14, borderWidth: 1.5, boxShadow: "0 0 22px color-mix(in srgb, var(--c) 30%, transparent)" }}>
+        <span className="ico detay-ikon">
           <ProjeIkon tur={p.ikon} boyut={28} />
         </span>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start", minWidth: 0 }}>
@@ -53,15 +55,13 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
       </div>
       {p.aciklama && <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.5, color: "var(--yazi-2)" }}>{p.aciklama}</p>}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-          <span className="disp" style={{ fontSize: 46, fontWeight: 700, lineHeight: 1, color: "var(--c)" }}>
-            {gun === null ? "—" : gun <= 0 ? "Bugün" : `${gun} gün`}
-          </span>
-          <span style={{ fontSize: 13, color: "var(--soluk)" }}>
-            {gun === null ? "git kaydı yok" : gun <= 0 ? "son commit" : "önce son commit"}
-          </span>
-        </div>
+      <div className="detay-ilerleme">
+        {ilerleme.yuzde !== null ? <>
+          <div className="detay-ilerleme-baslik"><span className="detay-yuzde">{ilerleme.yuzde}%</span><span className="sessiz">Adım ilerlemesi</span></div>
+          <div className="ilerleme-cubuk" role="progressbar" aria-label={`${p.ad} adım ilerlemesi`} aria-valuenow={ilerleme.yuzde} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${ilerleme.yuzde}%` }} /></div>
+          <span className="sessiz">{ilerleme.tamam} / {ilerleme.toplam} adım tamamlandı{cocuklar.length ? " · modüller dahil" : ""}</span>
+        </> : <div className="detay-ilerleme-baslik"><span className="detay-asama">{ASAMA_ETIKET[p.asama]}</span><span className="sessiz">Proje aşaması</span></div>}
+        <span className="etiketcik asama-baslik">YAYIN AŞAMASI</span>
         <div className="asamalar" style={{ gap: 5 }}>
           {[1, 2, 3, 4].map((i) => <span key={i} className={`asama${p.asamaSira >= i ? " on" : ""}`} style={{ height: 8 }} />)}
         </div>
@@ -69,6 +69,8 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
           <span>FİKİR</span><span>GELİŞTİRME</span><span>BEKLİYOR</span><span>CANLI</span>
         </div>
       </div>
+
+      <div className="son-degisiklik"><Svg ad="kod" boyut={16} /><span>Son commit</span><span className="mono" title={son ? tarihSaat(son.tarih) : undefined}>{son ? goreli(son.tarih, simdi) : "Kayıt yok"}</span></div>
 
       <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", borderTop: "1px solid var(--cizgi)", borderBottom: "1px solid var(--cizgi)" }}>
         {[
@@ -107,7 +109,7 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {baglar.map((b) => (
               <button key={b.id} type="button" className={`lnk st-${b.durum}`} onClick={() => sec(b.id)}>
-                <span className="dot" />{b.ad}
+                <ProjeIkon tur={b.ikon} boyut={16} />{b.ad}
               </button>
             ))}
           </div>
@@ -118,8 +120,8 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
 
       <div id="aktivite" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 8 }}>
-          <span className="etiketcik">SON COMMİTLER</span>
-          <span className="mono nabiz" style={{ fontSize: 11, color: "var(--live)" }}>● izleniyor</span>
+          <span className="etiketcik">PROJE AKTİVİTESİ</span>
+          <span className="mono" style={{ fontSize: 10, color: "var(--sessiz)" }}>git akışı</span>
         </div>
         {commitler.length ? (
           <ol className="zaman-cizelgesi">

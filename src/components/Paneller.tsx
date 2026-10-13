@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { Anlik, Asama, Proje } from "../types";
 import { durumEtiketi } from "../lib/etiket";
 import { goreli } from "../lib/zaman";
@@ -6,9 +7,15 @@ import { RadarLogo, Svg } from "./Ikon";
 export function Kenar({ veri, cikis }: { veri: Anlik; cikis?: () => void }) {
   const toplam = veri.hafta.reduce((t, g) => t + g.sayi, 0);
   const tepe = Math.max(1, ...veri.hafta.map((g) => g.sayi));
+  const [konum, setKonum] = useState(() => window.location.hash || "#harita");
+  useEffect(() => {
+    const degisti = () => setKonum(window.location.hash || "#harita");
+    window.addEventListener("hashchange", degisti);
+    return () => window.removeEventListener("hashchange", degisti);
+  }, []);
   const menu = [
     { href: "#ozet", ad: "Genel bakış", ikon: "ev" as const },
-    { href: "#harita", ad: "Proje haritası", ikon: "harita" as const, on: true },
+    { href: "#harita", ad: "Proje haritası", ikon: "harita" as const },
     { href: "#loglar", ad: "Sunucu & loglar", ikon: "kod" as const },
     { href: "#adimlar", ad: "Sıradaki adımlar", ikon: "liste" as const },
     { href: "#hat", ad: "Yayın hattı", ikon: "hat" as const },
@@ -26,7 +33,7 @@ export function Kenar({ veri, cikis }: { veri: Anlik; cikis?: () => void }) {
       <nav className="menu" aria-label="Ana menü">
         <span className="menu-baslik">ÇALIŞMA ALANI</span>
         {menu.map((m) => (
-          <a key={m.href} href={m.href} className={`nav${m.on ? " on" : ""}`} aria-current={m.on ? "page" : undefined}>
+          <a key={m.href} href={m.href} className={`nav${konum === m.href ? " on" : ""}`} aria-current={konum === m.href ? "location" : undefined}>
             <Svg ad={m.ikon} boyut={19} />{m.ad}
           </a>
         ))}
@@ -68,28 +75,28 @@ export function Kenar({ veri, cikis }: { veri: Anlik; cikis?: () => void }) {
 
 export function OzetSeridi({ veri }: { veri: Anlik }) {
   const P = veri.projeler;
-  const say = (fn: (p: Proje) => boolean) => P.filter(fn).length;
-  const kart = say((p) => Boolean(p.kart));
+  const anaProjeler = P.filter((p) => !p.ust);
+  const tamam = veri.adimlar.filter((a) => a.tamam).length;
+  const canli = P.filter((p) => p.asama === "canli").length;
+  const uyari = P.filter((p) => p.uyarilar.length > 0).length;
   const ogeler = [
-    { ad: "Toplam düğüm", deger: P.length, alt: `${kart} proje + ${P.length - kart} alt`, st: "idle" },
-    { ad: "Canlıda", deger: say((p) => p.asama === "canli"), alt: `/ ${P.length}`, st: "live" },
-    { ad: "Geliştirmede", deger: say((p) => p.asama === "gelistirme"), alt: `/ ${P.length}`, st: "dev" },
-    { ad: "Dikkat bekleyen", deger: say((p) => p.uyarilar.length > 0), alt: `/ ${P.length}`, st: "warn" },
-  ];
+    { ad: "Aktif proje", deger: anaProjeler.filter((p) => p.asama !== "beklemede").length, alt: `${anaProjeler.length} proje · ${P.length - anaProjeler.length} modül`, st: "live", ikon: "klasor", oran: anaProjeler.filter((p) => p.asama !== "beklemede").length / Math.max(1, anaProjeler.length) },
+    { ad: "Tamamlanan adım", deger: tamam, alt: `/ ${veri.adimlar.length} adım`, st: "idle", ikon: "gorev", oran: tamam / Math.max(1, veri.adimlar.length) },
+    { ad: "Canlı sistem", deger: canli, alt: `${P.length} proje ve modülde`, st: "dev", ikon: "nabiz", oran: canli / Math.max(1, P.length) },
+    { ad: "Dikkat bekleyen", deger: uyari, alt: uyari ? "proje / modül" : "Her şey yolunda", st: "warn", ikon: "uyari", oran: uyari / Math.max(1, P.length) },
+  ] as const;
   return (
     <section id="ozet" className="panel kpi-serit" aria-label="Özet göstergeler">
       {ogeler.map((o) => (
         <div key={o.ad} className={`kpi st-${o.st}`}>
-          <span className="ico" style={{ width: 42, height: 42 }}><span className="dot" /></span>
+          <span className="kpi-ikon"><Svg ad={o.ikon} boyut={25} /></span>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0 }}>
             <span className="kpi-ad" style={{ fontSize: 12.5, color: "var(--soluk)" }}>{o.ad}</span>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-              <span className="kpi-sayi">{o.deger}</span>
-              <span className="mono sessiz kpi-alt" style={{ fontSize: 12 }}>{o.alt}</span>
-            </div>
+            <span className="kpi-sayi">{String(o.deger).padStart(2, "0")}</span>
+            <span className="mono sessiz kpi-alt" style={{ fontSize: 10.5 }}>{o.alt}</span>
           </div>
           <div className="tikler" aria-hidden="true">
-            {P.map((p, i) => <span key={p.id} className={`tik${i < o.deger ? " on" : ""}`} />)}
+            {Array.from({ length: 8 }, (_, i) => <span key={i} className={`tik${i < Math.round(o.oran * 8) ? " on" : ""}`} style={{ height: 7 + i * 2 }} />)}
           </div>
         </div>
       ))}
@@ -130,13 +137,13 @@ export function Adimlar({ veri, isaretle }: { veri: Anlik; isaretle: (id: string
   );
   const tamam = veri.adimlar.filter((a) => a.tamam).length;
   return (
-    <section id="adimlar" className="panel" aria-label="Sıradaki adımlar" style={{ flex: "999 1 460px", minWidth: 0, overflow: "hidden" }}>
+    <section id="adimlar" className="panel adimlar-panel" aria-label="Sıradaki adımlar">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px" }}>
         <h2 className="panel-baslik">Sıradaki adımlar</h2>
         <span className="mono sessiz" style={{ fontSize: 12 }}>{tamam} / {veri.adimlar.length} tamam</span>
       </div>
-      <div style={{ overflowX: "auto" }}>
-        <div style={{ minWidth: 520 }}>
+      <div className="adimlar-liste">
+        <div>
           {sirali.map((a) => {
             const p = byId.get(a.projeId);
             const kimlik = `adim-${a.id.replace(/[^a-z0-9]/gi, "-")}`;
@@ -144,7 +151,7 @@ export function Adimlar({ veri, isaretle }: { veri: Anlik; isaretle: (id: string
               <div key={a.id} className={`adim${a.tamam ? " tamam" : ""}`}>
                 <input id={kimlik} type="checkbox" checked={a.tamam} onChange={(e) => isaretle(a.id, e.target.checked)} />
                 <label htmlFor={kimlik} className="adim-metin" style={{ fontWeight: 500, fontSize: 14, cursor: "pointer" }}>{a.metin}</label>
-                <span className={`st-${p?.durum ?? "idle"}`} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--soluk)", minWidth: 0 }}>
+                <span className={`adim-proje st-${p?.durum ?? "idle"}`} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--soluk)", minWidth: 0 }}>
                   <span className="dot" />
                   <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p?.ad ?? a.projeId}</span>
                 </span>
@@ -172,12 +179,13 @@ export function YayinHatti({ veri, sec }: { veri: Anlik; sec: (id: string) => vo
   // Canlıdaki modüller kalabalık yapmasın: canlı şeridinde yalnız ana projeler.
   const gorunur = veri.projeler.filter((p) => p.kart || p.asama !== "canli");
   return (
-    <section id="hat" className="panel" aria-label="Yayın hattı" style={{ flex: "1 1 280px", minWidth: 0, padding: "16px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
+    <section id="hat" className="panel yayin-panel" aria-label="Yayın hattı">
       <h2 className="panel-baslik">Yayın hattı</h2>
+      <div className="yayin-seritler">
       {SERITLER.map((s) => {
         const ogeler = gorunur.filter((p) => s.asamalar.includes(p.asama));
         return (
-          <div key={s.baslik} className={`st-${s.st}`} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div key={s.baslik} className={`yayin-asama st-${s.st}`}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span className="dot" />
               <span className="mono" style={{ fontSize: 11.5, letterSpacing: ".08em", textTransform: "uppercase" }}>{s.baslik}</span>
@@ -192,6 +200,7 @@ export function YayinHatti({ veri, sec }: { veri: Anlik; sec: (id: string) => vo
           </div>
         );
       })}
+      </div>
     </section>
   );
 }
