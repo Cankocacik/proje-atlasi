@@ -1,0 +1,366 @@
+{
+  "$aciklama": "Proje Atlası manifesti. Bu dosya kaydedildiği anda ekran güncellenir. Alanlar README.md'de.",
+  "yenilemeSaniye": 20,
+  "saglikSaniye": 60,
+  "githubSaniye": 300,
+  "fetchDakika": 5,
+  "gorunum": {
+    "vurgu": "#C6F24E",
+    "radar": true
+  },
+  "harita": {
+    "genislik": 780,
+    "yukseklik": 540
+  },
+  "projeler": [
+    {
+      "id": "rosbel",
+      "ad": "Rosbel Portal",
+      "tur": "Ana sistem",
+      "ikon": "hub",
+      "kart": true,
+      "asama": "canli",
+      "konum": {
+        "x": 284,
+        "y": 204,
+        "w": 212
+      },
+      "repo": "C:/SiparisOnayProjesi",
+      "github": "Cankocacik/SiparisOnayProjesi",
+      "haric": [
+        "tools/patlangac"
+      ],
+      "saglik": "https://rosbelportal.com",
+      "url": "https://rosbelportal.com",
+      "aciklama": "Sipariş onayından finansa tüm üretim akışı tek portalda.",
+      "uyarilar": [
+        "Numune Talep ve Bulk onay migration'ları sunucuda bekliyor"
+      ],
+      "adimlar": [
+        {
+          "id": "migration",
+          "metin": "Numune + Bulk onay migration'larını sunucuda uygula",
+          "etiket": "engel"
+        }
+      ],
+      "pm2": [
+        "siparis-backend"
+      ]
+    },
+    {
+      "id": "mutabiko",
+      "ad": "Mutabiko",
+      "tur": "Ürün",
+      "ikon": "product",
+      "kart": true,
+      "asama": "canli",
+      "konum": {
+        "x": 16,
+        "y": 16,
+        "w": 190
+      },
+      "repo": "C:/mutabik",
+      "github": "Cankocacik/mutabiko-",
+      "saglik": "https://mutabiko.com",
+      "url": "https://mutabiko.com",
+      "aciklama": "Cari mutabakat modülünden doğan bağımsız ürün.",
+      "uyarilar": [
+        "Ekstre karşılaştırma aracı (7e46dd5) canlıya alınmayı bekliyor"
+      ],
+      "adimlar": [
+        {
+          "id": "ekstre-canli",
+          "metin": "Ekstre karşılaştırma aracını canlıya al (yalnız web)",
+          "etiket": "engel"
+        },
+        {
+          "id": "ekstre-dal",
+          "metin": "fix/ekstre-gercek-dosyalar dalını gözden geçir",
+          "etiket": "sirada"
+        }
+      ],
+      "pm2": [
+        "mutabiko-api",
+        "mutabiko-web",
+        "mutabiko-tunnel"
+      ]
+    },
+    {
+      "id": "tasarim",
+      "ad": "Tasarım Botu",
+      "tur": "Ürün",
+      "ikon": "product",
+      "kart": true,
+      "asama": "gelistirme",
+      "konum": {
+        "x": 574,
+        "y": 16,
+        "w": 190
+      },
+      "repo": "C:/tasarimbotu",
+      "github": "Cankocacik/tasarisko",
+      "aciklama": "API'siz tasarım denemesi; çok kullanıcılı kullanım ve yerel LLM kapasitesi çalışılıyor."
+    },
+    {
+      "id": "patlangac",
+      "ad": "Patlangaç",
+      "tur": "Araç",
+      "ikon": "tool",
+      "kart": true,
+      "asama": "gelistirme",
+      "konum": {
+        "x": 574,
+        "y": 214,
+        "w": 190
+      },
+      "repo": "C:/SiparisOnayProjesi",
+      "kapsam": [
+        "tools/patlangac"
+      ],
+      "surum": "v3.6",
+      "aciklama": "Portal raporlarını Excel'e taşıyan araç; kurumsal mavi tema ve Nesan Triko profili."
+    },
+    {
+      "id": "ormo",
+      "ad": "ORMO Gümrük",
+      "tur": "Müşteri işi",
+      "ikon": "client",
+      "kart": true,
+      "asama": "canli",
+      "konum": {
+        "x": 16,
+        "y": 412,
+        "w": 190
+      },
+      "repo": "C:/ormoPython",
+      "github": "Cankocacik/ormoPython",
+      "saglik": "https://gumruk.ormoportal.com",
+      "url": "https://gumruk.ormoportal.com",
+      "surum": "canlı 2.2.0",
+      "aciklama": "Gümrük aracı ve finans rapor paketi.",
+      "uyarilar": [
+        "2.2.2 inceleme paketi hazır, canlıda 2.2.0"
+      ],
+      "adimlar": [
+        {
+          "id": "222",
+          "metin": "ORMO Gümrük 2.2.2'yi canlıya al",
+          "etiket": "engel"
+        }
+      ]
+    },
+    {
+      "id": "iceinox",
+      "ad": "İceinox Servis",
+      "tur": "Müşteri işi",
+      "ikon": "client",
+      "kart": true,
+      "asama": "canli",
+      "konum": {
+        "x": 574,
+        "y": 412,
+        "w": 190
+      },
+      "saglik": "https://iceinoxservis.com",
+      "url": "https://iceinoxservis.com",
+      "surum": "laravel · 688da50",
+      "aciklama": "Servis/garanti sistemi; Laravel sürümü 11.10'da canlıya alındı.",
+      "uyarilar": [
+        "G5 doğrulaması bekliyor"
+      ],
+      "adimlar": [
+        {
+          "id": "g5",
+          "metin": "İceinox G5 doğrulamasını yap",
+          "etiket": "engel"
+        }
+      ]
+    },
+    {
+      "id": "mutabakat",
+      "ad": "Cari Mutabakat",
+      "tur": "Rosbel modülü",
+      "ikon": "module",
+      "ust": "rosbel",
+      "asama": "canli",
+      "konum": {
+        "x": 290,
+        "y": 104
+      },
+      "repo": "C:/SiparisOnayProjesi",
+      "kapsam": [
+        "backend/src/services/mutabakat",
+        "backend/src/routes/mutabakat.js",
+        "backend/src/services/mailMutabakatMessages.js",
+        "frontend/app/mutabakat"
+      ],
+      "aciklama": "Cari mutabakat gönderimi, yanıt sayfası ve hatırlatmalar."
+    },
+    {
+      "id": "sozlesme",
+      "ad": "Sözleşme & Fason",
+      "tur": "Rosbel modülü",
+      "ikon": "module",
+      "ust": "rosbel",
+      "asama": "canli",
+      "konum": {
+        "x": 490,
+        "y": 104
+      },
+      "repo": "C:/SiparisOnayProjesi",
+      "kapsam": [
+        "backend/src/services/workshopContract*",
+        "backend/src/services/printContract*",
+        "backend/src/routes/sozlesmeOnay.js",
+        "frontend/app/sozlesme-onay"
+      ],
+      "aciklama": "Atölye sözleşmesi, onay merkezi, fason baskı akışı."
+    },
+    {
+      "id": "finans",
+      "ad": "Finans Raporları",
+      "tur": "Rosbel modülü",
+      "ikon": "module",
+      "ust": "rosbel",
+      "asama": "canli",
+      "konum": {
+        "x": 176,
+        "y": 222
+      },
+      "repo": "C:/SiparisOnayProjesi",
+      "kapsam": [
+        "backend/src/services/paymentAging*",
+        "backend/src/services/paymentListReport.js",
+        "backend/src/services/deviation",
+        "backend/src/services/orderGercekMaliyet*",
+        "backend/src/services/mizanReport.js"
+      ],
+      "aciklama": "Ödeme listesi, yaşlandırma, sapma raporu, gerçek maliyet maili."
+    },
+    {
+      "id": "redalert",
+      "ad": "Red Alert",
+      "tur": "Rosbel modülü",
+      "ikon": "module",
+      "ust": "rosbel",
+      "asama": "canli",
+      "konum": {
+        "x": 176,
+        "y": 318
+      },
+      "repo": "C:/SiparisOnayProjesi",
+      "kapsam": [
+        "backend/src/services/redAlert*",
+        "backend/src/services/mailRedAlert*"
+      ],
+      "aciklama": "Kumaş/aksesuar eksiği uyarıları: kalan = gereken − (gelen + devir)."
+    },
+    {
+      "id": "numune",
+      "ad": "Numune Talep",
+      "tur": "Rosbel modülü",
+      "ikon": "module",
+      "ust": "rosbel",
+      "asama": "bekliyor",
+      "konum": {
+        "x": 290,
+        "y": 440
+      },
+      "repo": "C:/SiparisOnayProjesi",
+      "kapsam": [
+        "backend/src/services/numune*",
+        "backend/src/routes/numune.js",
+        "frontend/app/numune"
+      ],
+      "aciklama": "İki dilli numune talep akışı, A4 fiş ve QR.",
+      "uyarilar": [
+        "Migration'lar sunucuda bekliyor"
+      ],
+      "adimlar": [
+        {
+          "id": "qr",
+          "metin": "QR okuyucu istasyonları için açık kararları netleştir",
+          "etiket": "sirada"
+        }
+      ]
+    },
+    {
+      "id": "erp",
+      "ad": "ERP Eğitimi",
+      "tur": "Rosbel modülü",
+      "ikon": "module",
+      "ust": "rosbel",
+      "asama": "canli",
+      "konum": {
+        "x": 490,
+        "y": 440
+      },
+      "repo": "C:/SiparisOnayProjesi",
+      "kapsam": [
+        "backend/src/services/erpEgitim",
+        "backend/src/routes/erpEgitim.js",
+        "frontend/app/erp-egitim",
+        "frontend/app/uretim-analiz-egitim"
+      ],
+      "aciklama": "ERP ekranı simülatörü, sınav ve seslendirmeli videolar."
+    },
+    {
+      "id": "tahsis",
+      "ad": "Cari Tahsis Botu",
+      "tur": "Rosbel modülü",
+      "ikon": "module",
+      "ust": "rosbel",
+      "asama": "bekliyor",
+      "konum": {
+        "x": 536,
+        "y": 372
+      },
+      "repo": "C:/SiparisOnayProjesi",
+      "kapsam": [
+        "backend/src/services/reklamasyonTahsis",
+        "backend/src/routes/reklamasyonTahsis.js",
+        "backend/src/services/mailReklamasyonTahsisSoru.js"
+      ],
+      "aciklama": "Reklamasyon tahsisini ERP'ye doğrudan yazan bot, 5 denetimle.",
+      "uyarilar": [
+        "Sunucu kurulumu sürüyor"
+      ],
+      "adimlar": [
+        {
+          "id": "kurulum",
+          "metin": "Cari Tahsis Botu sunucu kurulumunu bitir",
+          "etiket": "engel"
+        }
+      ]
+    },
+    {
+      "id": "fashion",
+      "ad": "Fashion Artwork",
+      "tur": "Skill",
+      "ikon": "module",
+      "asama": "beklemede",
+      "konum": {
+        "x": 669,
+        "y": 172
+      },
+      "aciklama": "Moodboard'dan stil DNA'sı çıkarıp baskıya hazır SVG üretir."
+    }
+  ],
+  "akislar": [
+    {
+      "kaynak": "mutabakat",
+      "hedef": "mutabiko",
+      "etiket": "yan ürün"
+    },
+    {
+      "kaynak": "rosbel",
+      "hedef": "patlangac",
+      "etiket": "rapor göçü"
+    },
+    {
+      "kaynak": "tasarim",
+      "hedef": "fashion",
+      "etiket": "stil DNA"
+    }
+  ]
+}
