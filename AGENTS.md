@@ -35,7 +35,13 @@ CI (`.github/workflows/ci.yml`, windows-latest): test + derleme + PowerShell 5.1
 - `server/` düz Node ESM, framework yok. `topla.js` her 20 sn anlık görüntü üretir; `api.js`
   HTTP + SSE (`/api/akis`) + kimlik; `turet.js` uyarı kuralları; `olaylar.js` durum değişimi
   günlüğü; `gecmis.js` site erişim geçmişi; `doktor.js` kurulum denetimi; `manifest.js`
-  `projeler.json` doğrulaması; `pm2.js` süreç + log kuyruğu.
+  `projeler.json` doğrulaması; `pm2.js` süreç + log kuyruğu; `icSaglik.js` uygulamaların
+  ayrıntılı sağlık ucu (yalnız sunucuda); `telegram.js` + `ozet.js` isteğe bağlı bildirim ve
+  günlük özet; `bildirim.js` neyin bildirileceği (arayüzle ortak tek kaynak); `kutu.js` kart
+  ölçüleri (arayüzle ortak).
+- İzleme `server/index.js` dinlemeye başlayınca başlar (kimse sayfayı açmasa da işler);
+  geliştirmede (`npm run dev`, vitest) tembel kalır.
+- Tüm olay yazımı `api.js` → `olayEkle` üzerinden: günlük + (açıksa) Telegram aynı yoldan.
 - `src/` Vite + React + TS. Renk/ölçü tokenları `src/styles.css` `:root` bloğunda.
 - `projeler.json` manifesttir; kaydedilince ekran kendini yeniler (yeniden başlatma gerekmez).
 
@@ -53,6 +59,13 @@ CI (`.github/workflows/ci.yml`, windows-latest): test + derleme + PowerShell 5.1
   deneme sınırı portal sorgusundan ÖNCE. Uzak istek her zaman giriş ister.
 - **Kart ölçüleri tek kaynak:** `server/kutu.js` (arayüz `src/lib/geometri.ts` üzerinden okur).
 - **Sağlık kuralı:** 2xx/3xx ve 401/403 ayakta; 404, 5xx, ağ hatası değil (`server/saglik.js`).
+- **Tarih karşılaştırması:** commit tarihi metin olarak karşılaştırılmaz (`Date.parse`): git `%cI`
+  committer'ın kendi saat dilimini yazar.
+- **Yayın adımı = kopyalanacak komut:** `projeler.json` → `yayin.adimlar`. Tehlikeli kısa yol
+  yazılmaz (ör. doğrudan `npm run migrate` değil, önce `migrate:verify` — canlı defter bayat).
+  Yollarda düz bölü (`C:/klasor`); JSON'da `\b`, `\t` kaçışı sessizce bozulur.
+- **Dışarı giden her kanal varsayılan kapalı** (Telegram): yalnız `.env`'de alıcı tanımlıysa açılır;
+  `ENABLE_*` bayrağı yazılmaz.
 - **Ana dala birleştirme kararı kullanıcınındır.** İş dalda yapılır, özetlenir, onay beklenir.
   Aynı anda iki ajan çalışıyorsa her biri kendi `git worktree`'sinde çalışır
   (ör. `C:\proje-atlasi-<konu>`); ortak çalışma klasöründe başkasının yarım işinin üstüne yazılmaz.
