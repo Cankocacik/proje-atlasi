@@ -226,3 +226,21 @@ describe("pm2 kaydı", async () => {
     expect(s.mesaj).toContain("proje-atlasi");
   });
 });
+
+describe("olay sırası ve saat dilimi", () => {
+  it("ekle oluş sırasıyla döner; liste yeniden eskiye", async () => {
+    const dosya = join(await mkdtemp(join(tmpdir(), "atlas-sira-")), "o.json");
+    const d = olayDeposu({ dosya });
+    const r = await d.ekle([{ metin: "önce" }, { metin: "sonra" }]);
+    expect(r.map((o) => o.metin)).toEqual(["önce", "sonra"]);
+    expect((await d.son()).map((o) => o.metin)).toEqual(["sonra", "önce"]);
+  });
+
+  it("farklı saat dilimli commit tarihlerini doğru karşılaştırır", () => {
+    const g = (hash, tarih) => ({ son: { hash, kisa: hash, tarih, mesaj: hash } });
+    // 10:30+03:00 = 07:30Z; 08:00Z daha yeni olduğu halde metin olarak "küçük" görünür.
+    const once = { projeler: [{ id: "a", ad: "A", git: g("eski", "2026-10-14T10:30:00+03:00") }] };
+    const sonra = { projeler: [{ id: "a", ad: "A", git: g("yeni", "2026-10-14T08:00:00Z") }] };
+    expect(olaylariBul(once, sonra).map((o) => o.tur)).toEqual(["commit"]);
+  });
+});

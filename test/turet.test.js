@@ -149,3 +149,13 @@ describe("yayinAdimlari", async () => {
     expect(yayinAdimlari([], kurallar)).toEqual([]);
   });
 });
+
+describe("akış sıralaması saat dilimi", () => {
+  it("farklı dilimli commitleri zamana göre sıralar", () => {
+    const akis = akisiBirlestir([{ id: "a", git: { commitler: [
+      { hash: "h1", tarih: "2026-10-14T10:30:00+03:00" },
+      { hash: "h2", tarih: "2026-10-14T08:00:00Z" },
+    ] } }]);
+    expect(akis.map((c) => c.hash)).toEqual(["h2", "h1"]);
+  });
+});

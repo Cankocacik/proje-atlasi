@@ -2,6 +2,9 @@
 // DB/ağ/dosya erişimi yok — birim testle korunur (test/turet.test.js).
 
 export const YAVAS_MS = 3000;
+
+// Commit tarihleri zaman olarak sıralanır: git %cI committer'ın dilimini yazar, metin sırası yanıltır.
+const yenidenEskiye = (a, b) => Date.parse(b.tarih) - Date.parse(a.tarih);
 export const HATA_ESIGI = 10;
 
 /**
@@ -71,7 +74,7 @@ export function akisiBirlestir(projeler, sinir = 40) {
     }
   }
   return [...secilen.values()]
-    .sort((a, b) => (a.tarih < b.tarih ? 1 : a.tarih > b.tarih ? -1 : 0))
+    .sort(yenidenEskiye)
     .slice(0, sinir)
     .map(({ oncelik: _o, ...c }) => c);
 }
@@ -110,7 +113,7 @@ export function akisSec(tumAkis, projeIdleri, { genel = 40, projeBasi = 4 } = {}
   for (const id of projeIdleri) {
     for (const c of tumAkis.filter((x) => x.projeId === id).slice(0, projeBasi)) secilen.set(c.hash, c);
   }
-  return [...secilen.values()].sort((a, b) => (a.tarih < b.tarih ? 1 : a.tarih > b.tarih ? -1 : 0));
+  return [...secilen.values()].sort(yenidenEskiye);
 }
 
 const GUN_ADLARI =["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];

@@ -33,7 +33,8 @@ export function olaylariBul(onceki, simdiki) {
     if (p.kapsam?.length) continue;
     const oSon = o.git?.son;
     const pSon = p.git?.son;
-    if (oSon && pSon && oSon.hash !== pSon.hash && pSon.tarih > oSon.tarih) {
+    // Tarih metin değil zaman olarak karşılaştırılır: git %cI committer'ın kendi dilimini yazar (+03:00 / Z).
+    if (oSon && pSon && oSon.hash !== pSon.hash && Date.parse(pSon.tarih) > Date.parse(oSon.tarih)) {
       olaylar.push({ seviye: "bilgi", tur: "commit", projeId: p.id, metin: `${p.ad}: yeni commit — ${pSon.mesaj} (${pSon.kisa})` });
     }
     if (simdiki.ortam === "sunucu" && o.git?.canlida && p.git?.canlida && o.git.canlida !== p.git.canlida) {
@@ -94,7 +95,8 @@ export function olayDeposu({ dosya, sinir = 300 }) {
     await yukle();
     if (!yeniler.length) return [];
     const eklenen = yeniler.map((o) => ({ id: ++sayac, zaman: zaman.toISOString(), ...o }));
-    liste = [...eklenen.reverse(), ...liste].slice(0, sinir);
+    // Liste yeniden eskiye tutulur; dönen dizi ise oluş sırasındadır (bildirim mesajı bu sırayla yazılır).
+    liste = [...[...eklenen].reverse(), ...liste].slice(0, sinir);
     kaydet();
     return eklenen;
   }
