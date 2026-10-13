@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Atlas Windows sunucuda çalışır: testler de orada koşar.
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-fund --no-audit
+      - run: npm test
+      - run: npm run build
+      - name: Kurulum betikleri (Windows PowerShell 5.1 sözdizimi)
+        shell: powershell
+        run: |
+          $hatali = $false
+          foreach ($f in Get-ChildItem scripts\*.ps1) {
+            $hatalar = $null; $jetonlar = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$jetonlar, [ref]$hatalar)
+            if ($hatalar) { $hatali = $true; $hatalar | ForEach-Object { Write-Host "$($f.Name):$($_.Extent.StartLineNumber) $($_.Message)" } }
+            else { Write-Host "$($f.Name): temiz" }
+          }
+          if ($hatali) { exit 1 }
+      - name: projeler.json denetimi
+        run: node --input-type=module -e "import { manifestDogrula } from './server/manifest.js'; import { readFileSync } from 'node:fs'; const s = manifestDogrula(JSON.parse(readFileSync('projeler.json', 'utf8'))); for (const x of s) console.log(x.seviye, x.yer, x.mesaj); if (s.some((x) => x.seviye === 'hata')) process.exit(1);"
