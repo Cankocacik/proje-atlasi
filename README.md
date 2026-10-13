@@ -59,7 +59,9 @@ modülü) akışta en dar kapsamlı projeye yazılır.
 ## Güvenlik
 
 - Yalnız `127.0.0.1`'e bağlanır; Host başlığı yerel ya da `ATLAS_HOST` olmalı.
-- Cloudflare'den gelen (ya da yerel olmayan) her istek parola ister: scrypt özeti,
+- Cloudflare'den gelen (ya da yerel olmayan) her istek parola ister. Parola Rosbel
+  portalındaki tek kullanıcınınkidir (`ATLAS_PORTAL_EPOSTA`; portal giriş ucuna sorulur,
+  portal jetonu hemen kapatılır) ya da ayrı scrypt özeti (`ATLAS_PAROLA_HASH`).
   HMAC imzalı HttpOnly/SameSite=Strict/Secure çerez, IP başına 15 dk'da 5 deneme.
 - Yazma istekleri (`POST`) özel başlık + aynı köken ister (CSRF).
 - "VS Code'da aç" yalnız yerel ortamda ve yerel istekte çalışır.

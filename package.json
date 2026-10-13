@@ -10,7 +10,8 @@
     "start": "node server/index.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "parola": "node scripts/parola.js"
+    "parola": "node scripts/parola.js",
+    "sir": "node scripts/sir.js"
   },
   "dependencies": {
     "react": "^18.3.1",

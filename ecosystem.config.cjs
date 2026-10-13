@@ -10,6 +10,8 @@ module.exports = {
       env: {
         ATLAS_ORTAM: "sunucu",
         ATLAS_HOST: "atlas.rosbelportal.com",
+        // Giriş parolası = bu portal kullanıcısının parolası (portal hesabı pasifse giriş de kapanır).
+        ATLAS_PORTAL_EPOSTA: "muhammed@rosbeltr.com",
         PORT: "4321",
       },
       max_memory_restart: "300M",

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { RadarLogo } from "./Ikon";
 
-export function Giris({ giris }: { giris: (parola: string) => Promise<void> }) {
+export function Giris({ giris, girisTuru }: { giris: (parola: string) => Promise<void>; girisTuru: "portal" | "parola" }) {
   const [parola, setParola] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
@@ -30,7 +30,7 @@ export function Giris({ giris }: { giris: (parola: string) => Promise<void> }) {
             <span className="marka-alt">KOMUTA MERKEZİ</span>
           </div>
         </div>
-        <label className="alan-etiket" htmlFor="parola">Parola</label>
+        <label className="alan-etiket" htmlFor="parola">{girisTuru === "portal" ? "Rosbel portal parolan" : "Parola"}</label>
         <input
           id="parola"
           className="alan"

@@ -3,6 +3,7 @@ import { watch } from "node:fs";
 import { basename, dirname } from "node:path";
 import { cerezOku, denemeSiniri, jetonCoz, jetonUret, parolaDogru } from "./kimlik.js";
 import { ortamOku } from "./ortam.js";
+import { portalGirisi } from "./portalGiris.js";
 import { logIzleyici, pm2Listesi, yenidenBaslamaIzleyici } from "./pm2.js";
 import { adimIsaretle, manifestOku, MANIFEST_YOLU, topla } from "./topla.js";
 
@@ -159,17 +160,34 @@ export function apiOlustur(ayar = ortamOku()) {
       if (!istekUygun(req, ayar.host)) return json(res, 403, { hata: "İstek reddedildi (köken/başlık)." });
       const uzak = uzakMi(req);
       const girisGerekli = uzak;
-      const kimlikHazir = Boolean(ayar.parolaOzeti && ayar.oturumSirri && ayar.oturumSirri.length >= 32);
+      // Portal kipi önceliklidir: parola Rosbel portalındaki izinli kullanıcınınkidir.
+      const girisTuru = ayar.portalEposta ? "portal" : "parola";
+      const kimlikHazir = Boolean(
+        (ayar.portalEposta || ayar.parolaOzeti) && ayar.oturumSirri && ayar.oturumSirri.length >= 32,
+      );
 
       if (req.method === "GET" && yol === "/api/oturum") {
-        return json(res, 200, { girisGerekli, girisli: !girisGerekli || girisli(req), kimlikHazir });
+        return json(res, 200, { girisGerekli, girisli: !girisGerekli || girisli(req), kimlikHazir, girisTuru });
       }
       if (req.method === "POST" && yol === "/api/giris") {
-        if (!kimlikHazir) return json(res, 503, { hata: "Sunucuda parola ayarlanmamış (ATLAS_PAROLA_HASH / ATLAS_OTURUM_SIRRI)." });
+        if (!kimlikHazir) return json(res, 503, { hata: "Sunucuda giriş ayarlanmamış (ATLAS_PORTAL_EPOSTA ya da ATLAS_PAROLA_HASH, ve ATLAS_OTURUM_SIRRI)." });
         const ip = istemciIp(req);
+        // Atlas'ın kendi sınırı portala gitmeden önce uygulanır: portal kaba kuvvete aracılık etmez.
         if (!sinir.izinli(ip)) return json(res, 429, { hata: "Çok fazla deneme. Biraz sonra tekrar dene." });
         const { parola } = await govdeOku(req);
-        if (!(await parolaDogru(parola, ayar.parolaOzeti))) {
+        if (typeof parola !== "string" || !parola) return json(res, 400, { hata: "Parola boş olamaz." });
+        let dogru;
+        if (girisTuru === "portal") {
+          const sonuc = await portalGirisi({ url: ayar.portalGirisUrl, eposta: ayar.portalEposta, parola });
+          if (!sonuc.ok && sonuc.neden === "portal") {
+            console.error(`[atlas] portal giriş ucu yanıt vermedi (${sonuc.kod})`);
+            return json(res, 502, { hata: "Portal şu an doğrulama yapamıyor. Biraz sonra tekrar dene." });
+          }
+          dogru = sonuc.ok;
+        } else {
+          dogru = await parolaDogru(parola, ayar.parolaOzeti);
+        }
+        if (!dogru) {
           sinir.basarisiz(ip);
           console.warn(`[atlas] başarısız giriş: ${ip}`);
           return json(res, 401, { hata: "Parola yanlış." });
@@ -183,7 +201,7 @@ export function apiOlustur(ayar = ortamOku()) {
       }
 
       if (girisGerekli) {
-        if (!kimlikHazir) return json(res, 503, { hata: "Uzak erişim için sunucuda parola ayarlanmamış." });
+        if (!kimlikHazir) return json(res, 503, { hata: "Uzak erişim için sunucuda giriş ayarlanmamış." });
         if (!girisli(req)) return json(res, 401, { hata: "Oturum gerekli." });
       }
       await baslat();

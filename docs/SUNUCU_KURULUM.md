@@ -1,6 +1,6 @@
 # Proje Atlası — ofis sunucusuna kurulum
 
-Hedef: `https://atlas.rosbelportal.com` · yalnız parolayla girilir · Rosbel ve
+Hedef: `https://atlas.rosbelportal.com` · yalnız portal kullanıcısının parolasıyla girilir · Rosbel ve
 Mutabiko pm2 loglarını canlı izler.
 
 ```
@@ -33,13 +33,20 @@ npm run build
 
 ## 2 · Gizli ayarlar (.env)
 
+Giriş parolası **Rosbel portalındaki `muhammed@rosbeltr.com` kullanıcısının parolasıdır**
+(`ecosystem.config.cjs` → `ATLAS_PORTAL_EPOSTA`). Atlas parolayı aynı sunucudaki portal
+backend'ine sorar (`http://127.0.0.1:4000/api/auth/login`); doğruysa portalın verdiği
+jetonun e-postası bu adresle eşleşmeli, portal oturumu da hemen kapatılır. Portalda
+parola değişirse Atlas'ınki de değişir; hesap pasife alınırsa giriş kapanır.
+
 ```powershell
 copy .env.example .env
-npm run parola
+npm run sir
 ```
 
-`npm run parola` iki satır basar (`ATLAS_PAROLA_HASH=…`, `ATLAS_OTURUM_SIRRI=…`);
-ikisini `.env`'e yapıştır. Parolanın kendisi hiçbir yere yazılmaz.
+`npm run sir` tek satır basar (`ATLAS_OTURUM_SIRRI=…`); `.env`'deki boş karşılığına
+yapıştır. Portal backend'i 4000 dışında bir portta çalışıyorsa `ATLAS_PORTAL_GIRIS_URL`
+satırını aç.
 
 `GITHUB_TOKEN`: GitHub → Settings → Developer settings → Fine-grained tokens.
 Repository access: yalnız `tasarisko`, `ormoPython` (sunucuda klonu olmayanlar;
@@ -106,5 +113,5 @@ pm2 restart proje-atlasi
   hata satırı projede uyarıya döner.
 - **Tüm oturumları kapatmak:** `.env`'de `ATLAS_OTURUM_SIRRI`'yi değiştir →
   `pm2 restart proje-atlasi`.
-- **Parola değiştirmek:** `npm run parola` → `.env` → `pm2 restart proje-atlasi`.
+- **Parola değiştirmek:** portalda değiştir; Atlas aynı parolayı kullanır.
 - Loglarda kişisel veri/sır olabilir; bu yüzden log ucu da parolanın arkasındadır.

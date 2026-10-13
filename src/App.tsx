@@ -18,13 +18,13 @@ const FILTRELER: { id: Filtre; ad: string; uyar: (p: Proje) => boolean }[] = [
 ];
 
 export function App() {
-  const { oturum, girisGerekli, giris, cikis, veri, bagli, hata, simdi, tara, taraniyor, adimIsaretle, repoAc, loglar, logYukle } = useAtlas();
+  const { oturum, girisGerekli, girisTuru, giris, cikis, veri, bagli, hata, simdi, tara, taraniyor, adimIsaretle, repoAc, loglar, logYukle } = useAtlas();
   const [secili, setSecili] = useState<string | null>(null);
   const [filtre, setFiltre] = useState<Filtre>("hepsi");
   const [gorunum, setGorunum] = useState<"harita" | "liste">("harita");
   const [yakinlik, setYakinlik] = useState(100);
 
-  if (oturum === "giris") return <Giris giris={giris} />;
+  if (oturum === "giris") return <Giris giris={giris} girisTuru={girisTuru} />;
   if (!veri) {
     return <div className="yukleniyor">{hata ?? "Projeler taranıyor…"}</div>;
   }

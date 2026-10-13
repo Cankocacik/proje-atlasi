@@ -11,6 +11,7 @@ const LOG_SINIRI = 600;
 export function useAtlas() {
   const [oturum, setOturum] = useState<OturumDurumu>("bakiliyor");
   const [girisGerekli, setGirisGerekli] = useState(false);
+  const [girisTuru, setGirisTuru] = useState<"portal" | "parola">("parola");
   const [veri, setVeri] = useState<Anlik | null>(null);
   const [bagli, setBagli] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
@@ -20,8 +21,9 @@ export function useAtlas() {
   useEffect(() => {
     fetch("/api/oturum")
       .then((r) => r.json())
-      .then((o: { girisGerekli: boolean; girisli: boolean }) => {
+      .then((o: { girisGerekli: boolean; girisli: boolean; girisTuru?: "portal" | "parola" }) => {
         setGirisGerekli(o.girisGerekli);
+        if (o.girisTuru) setGirisTuru(o.girisTuru);
         setOturum(o.girisli ? "acik" : "giris");
       })
       .catch(() => setHata("Sunucuya ulaşılamadı."));
@@ -124,7 +126,7 @@ export function useAtlas() {
   }, []);
 
   return {
-    oturum, girisGerekli, giris, cikis,
+    oturum, girisGerekli, girisTuru, giris, cikis,
     veri, bagli, hata, simdi, tara, taraniyor, adimIsaretle, repoAc,
     loglar, logYukle,
   };
