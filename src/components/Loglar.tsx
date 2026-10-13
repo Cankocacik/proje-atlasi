@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Anlik, LogSatiri, Surec } from "../types";
+import { Svg } from "./Ikon";
+
+/** Görünen satırları (süzgeçler uygulanmış) düz metin .log olarak indirir. */
+function indir(surec: string, satirlar: LogSatiri[]) {
+  const metin = satirlar.map((s) => `${s.gecmis ? "-" : s.zaman}\t${s.akim}\t${s.metin}`).join("\n");
+  const url = URL.createObjectURL(new Blob([metin], { type: "text/plain;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${surec}-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}.log`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 interface Props {
   veri: Anlik;
@@ -86,6 +98,9 @@ export function Loglar({ veri, loglar, logYukle }: Props) {
             <button type="button" className={`fbtn${yalnizHata ? " on" : ""}`} aria-pressed={yalnizHata} onClick={() => setYalnizHata((x) => !x)}>Yalnız hatalar</button>
             <button type="button" className={`fbtn${takip ? " on" : ""}`} aria-pressed={takip} onClick={() => setTakip((x) => !x)}>Takip et</button>
             <span className="mono sessiz" style={{ fontSize: 11 }}>{satirlar.length} satır</span>
+            <button type="button" className="fbtn" disabled={!satirlar.length} onClick={() => aktif && indir(aktif, satirlar)} title="Ekrandaki satırları .log dosyası olarak indir">
+              <Svg ad="indir" boyut={14} />İndir
+            </button>
           </div>
 
           <div ref={kutu} className="log-kutu" role="log" aria-live="off" onScroll={(e) => {
@@ -95,6 +110,9 @@ export function Loglar({ veri, loglar, logYukle }: Props) {
           }}>
             {satirlar.map((s, i) => (
               <div key={i} className={`log-satir${s.hata ? " hata" : ""}`}>
+                <span className="log-zaman" title={s.gecmis ? "Atlas açılmadan önce yazılmış satır (zamanı bilinmiyor)" : new Date(s.zaman).toLocaleString("tr-TR")}>
+                  {s.gecmis ? "önce" : new Date(s.zaman).toLocaleTimeString("tr-TR")}
+                </span>
                 <span className="log-akim">{s.akim}</span>
                 <span className="log-metin">{s.metin}</span>
               </div>

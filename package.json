@@ -11,7 +11,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "parola": "node scripts/parola.js",
-    "sir": "node scripts/sir.js"
+    "sir": "node scripts/sir.js",
+    "doktor": "node scripts/doktor.js"
   },
   "dependencies": {
     "react": "^18.3.1",

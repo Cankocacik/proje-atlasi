@@ -46,7 +46,9 @@ async function onbellekli(anahtar, tazelikMs, zorla, uret) {
  * Manifest + git/GitHub + sağlık + pm2 + işaretli adımlar → ekranın tek anlık görüntüsü.
  * surecler: pm2 yoksa null; varsa [{ ad, durum, ..., sonSaatYenidenBaslama, hata15 }]
  */
-export async function topla({ zorla = false, ayar, surecler = null }) {
+export async function topla({ zorla = false, ayar, surecler = null, saglikKaydi = null, denetim = null }) {
+  // saglikKaydi: { ekle(url, sonuc), ozet(url) } — erişilebilirlik geçmişi (isteğe bağlı)
+  // denetim: son kurulum denetimi; hata/uyarıları `atlasKendisi` düğümüne uyarı olarak düşer
   const m = await manifestOku();
   const adimDurumu = await adimDurumuOku();
   const saglikMs = (m.saglikSaniye ?? 60) * 1000;
@@ -70,16 +72,31 @@ export async function topla({ zorla = false, ayar, surecler = null }) {
     m.projeler.map(async (p) => {
       const [git, saglik] = await Promise.all([
         gitGetir(p),
-        p.saglik ? onbellekli(`saglik:${p.saglik}`, saglikMs, zorla, () => saglikKontrol(p.saglik)) : null,
+        p.saglik
+          ? onbellekli(`saglik:${p.saglik}`, saglikMs, zorla, async () => {
+            const sonuc = await saglikKontrol(p.saglik);
+            await saglikKaydi?.ekle(p.saglik, sonuc);
+            return sonuc;
+          })
+          : null,
       ]);
+      const saglikGecmisi = p.saglik && saglikKaydi ? await saglikKaydi.ozet(p.saglik) : null;
       const projeSurecleri = surecler
         ? (p.pm2 ?? []).map((ad) => surecler.find((s) => s.ad === ad) ?? { ad, durum: "bulunamadı", sonSaatYenidenBaslama: 0, hata15: 0 })
         : [];
       const uyarilar = uyarilariUret(p, git, saglik, { ortam: ayar.ortam, surecler: projeSurecleri });
+      if (p.atlasKendisi && denetim) {
+        for (const d of denetim.sonuclar) {
+          if (d.durum === "hata" || d.durum === "uyari") {
+            uyarilar.push({ metin: `Kurulum · ${d.ad}: ${d.mesaj}`, kaynak: "denetim", seviye: d.durum === "hata" ? "yuksek" : "orta" });
+          }
+        }
+      }
       return {
         ...p,
         git,
         saglik,
+        saglikGecmisi,
         surecler: projeSurecleri.map((s) => s.ad),
         uyarilar,
         durum: durumBul(p.asama, uyarilar),

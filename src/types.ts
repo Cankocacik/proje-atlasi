@@ -12,7 +12,7 @@ export interface Commit {
 
 export interface Uyari {
   metin: string;
-  kaynak: "elle" | "git" | "saglik" | "pm2";
+  kaynak: "elle" | "git" | "saglik" | "pm2" | "denetim";
   seviye: "orta" | "yuksek";
 }
 
@@ -36,6 +36,8 @@ export interface Proje {
   github?: string;
   pm2?: string[];
   surecler?: string[];
+  atlasKendisi?: boolean;
+  saglikGecmisi?: SaglikGecmisi | null;
   git: {
     var: boolean;
     kaynak?: "git" | "github";
@@ -81,6 +83,8 @@ export interface LogSatiri {
   akim: "out" | "err";
   hata: boolean;
   metin: string;
+  /** Atlas açılmadan önce dosyada olan satır: zamanı bilinmiyor. */
+  gecmis?: boolean;
 }
 
 export type Ortam = "yerel" | "sunucu";
@@ -97,4 +101,47 @@ export interface Anlik {
   hafta: { tarih: string; gun: string; sayi: number; bugun: boolean }[];
   adimlar: Adim[];
   manifestHatasi?: string | null;
+  atlas?: AtlasBilgi | null;
+  denetim?: Denetim | null;
+  olaylar?: Olay[];
+}
+
+/** Son 24 saatin 30'ar dakikalık kutuları: ok · kismi (bazısı düştü) · hata · null (veri yok). */
+export interface SaglikGecmisi {
+  yuzde: number | null;
+  ortalamaMs: number | null;
+  ornek: number;
+  kutular: ("ok" | "kismi" | "hata" | null)[];
+}
+
+export interface Olay {
+  id: number;
+  zaman: string;
+  seviye: "hata" | "uyari" | "iyi" | "bilgi";
+  tur: string;
+  projeId?: string;
+  metin: string;
+}
+
+export interface DenetimSonucu {
+  ad: string;
+  durum: "ok" | "uyari" | "hata" | "atla";
+  mesaj: string;
+  cozum?: string;
+}
+
+export interface Denetim {
+  zaman: string;
+  sonuclar: DenetimSonucu[];
+  ozet: { ok: number; uyari: number; hata: number; atla: number };
+}
+
+export interface AtlasBilgi {
+  commit: string | null;
+  tarih: string | null;
+  mesaj: string | null;
+  derleme: string | null;
+  derlemeEski: boolean;
+  node: string;
+  baslangic: string;
 }

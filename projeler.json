@@ -344,6 +344,24 @@
         "y": 172
       },
       "aciklama": "Moodboard'dan stil DNA'sı çıkarıp baskıya hazır SVG üretir."
+    },
+    {
+      "id": "atlas",
+      "ad": "Proje Atlası",
+      "tur": "Bu ekran",
+      "ikon": "module",
+      "asama": "canli",
+      "atlasKendisi": true,
+      "konum": {
+        "x": 390,
+        "y": 34
+      },
+      "repo": "C:/proje-atlasi",
+      "github": "Cankocacik/proje-atlasi",
+      "pm2": ["proje-atlasi"],
+      "saglik": "https://atlas.rosbelportal.com/api/oturum",
+      "url": "https://atlas.rosbelportal.com",
+      "aciklama": "Bu ekran. Sunucuda pm2 + Cloudflare Tunnel ile çalışır; kurulum denetiminin sorunları burada uyarı olarak görünür."
     }
   ],
   "akislar": [

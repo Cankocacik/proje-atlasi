@@ -3,6 +3,7 @@ import { durumEtiketi } from "../lib/etiket";
 import { goreli, tarihSaat } from "../lib/zaman";
 import { ASAMA_ETIKET } from "../lib/etiket";
 import { projeIlerlemesi, projeKapsami } from "../lib/ilerleme";
+import { kutuAraligi } from "../lib/olay";
 import { ProjeIkon, Svg } from "./Ikon";
 
 interface Props {
@@ -14,7 +15,8 @@ interface Props {
   repoAc?: (id: string) => void;
 }
 
-const KAYNAK_AD = { elle: "not", git: "git", saglik: "site", pm2: "pm2" } as const;
+const KAYNAK_AD = { elle: "not", git: "git", saglik: "site", pm2: "pm2", denetim: "kurulum" } as const;
+const KUTU_AD = { ok: "erişilebilir", kismi: "kısmi kesinti", hata: "kesinti" } as const;
 
 export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
   const byId = new Map(veri.projeler.map((x) => [x.id, x]));
@@ -89,6 +91,24 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
           </div>
         ))}
       </dl>
+
+      {p.saglikGecmisi && p.saglikGecmisi.ornek > 0 && (
+        <div className="erisim">
+          <div className="erisim-baslik">
+            <span className="etiketcik">ERİŞİM · 24 SA</span>
+            <span className="mono erisim-deger" title={p.saglikGecmisi.ortalamaMs != null ? `Ortalama yanıt ${p.saglikGecmisi.ortalamaMs} ms · ${p.saglikGecmisi.ornek} yoklama` : undefined}>
+              %{p.saglikGecmisi.yuzde}
+              {p.saglikGecmisi.ortalamaMs != null && <span className="sessiz"> · {p.saglikGecmisi.ortalamaMs} ms</span>}
+            </span>
+          </div>
+          <div className="erisim-serit" role="img" aria-label={`Son 24 saatte erişilebilirlik yüzde ${p.saglikGecmisi.yuzde}, ${p.saglikGecmisi.ornek} yoklama`}>
+            {p.saglikGecmisi.kutular.map((k, i, arr) => (
+              <span key={i} className={`erisim-kutu ${k ?? "bos"}`} title={`${kutuAraligi(i, arr.length, simdi)} · ${k ? KUTU_AD[k] : "veri yok"}`} />
+            ))}
+          </div>
+          <div className="erisim-alt mono"><span>24 sa önce</span><span>şimdi</span></div>
+        </div>
+      )}
 
       {p.uyarilar.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

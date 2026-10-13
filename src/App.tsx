@@ -6,6 +6,10 @@ import { Detay } from "./components/Detay";
 import { Adimlar, Kenar, Liste, OzetSeridi, YayinHatti } from "./components/Paneller";
 import { Giris } from "./components/Giris";
 import { Loglar } from "./components/Loglar";
+import { Olaylar } from "./components/Olaylar";
+import { Denetim } from "./components/Denetim";
+import { useBildirim } from "./hooks/useBildirim";
+import { goreli } from "./lib/zaman";
 import { Svg } from "./components/Ikon";
 
 type Filtre = "hepsi" | "canli" | "gelistirme" | "dikkat";
@@ -17,12 +21,13 @@ const FILTRELER: { id: Filtre; ad: string; uyar: (p: Proje) => boolean }[] = [
 ];
 
 export function App() {
-  const { oturum, girisGerekli, girisTuru, giris, cikis, veri, bagli, hata, simdi, tara, taraniyor, adimIsaretle, repoAc, loglar, logYukle } = useAtlas();
+  const { oturum, girisGerekli, girisTuru, giris, cikis, veri, bagli, hata, simdi, tara, taraniyor, adimIsaretle, repoAc, loglar, logYukle, denetle, denetleniyor } = useAtlas();
   const [secili, setSecili] = useState<string | null>(null);
   const [filtre, setFiltre] = useState<Filtre>("hepsi");
   const [arama, setArama] = useState("");
   const [gorunum, setGorunum] = useState<"harita" | "liste">("harita");
   const [yakinlik, setYakinlik] = useState(100);
+  const { izin, izinIste } = useBildirim(veri?.olaylar, veri ? veri.projeler.filter((x) => x.uyarilar.length > 0).length : 0);
 
   if (oturum === "giris") return <Giris giris={giris} girisTuru={girisTuru} />;
   if (!veri) return <div className="yukleniyor" role="status"><Svg ad="harita" boyut={32} /><span>{hata ?? "Projelerin yükleniyor…"}</span></div>;
@@ -89,10 +94,12 @@ export function App() {
               </> : <Liste veri={veri} sec={setSecili} eslesir={eslesir} simdi={simdi} />}
               {sonucSayisi === 0 && <p className="harita-bos" role="status">Bu süzgece uyan proje yok. <button type="button" onClick={() => { setFiltre("hepsi"); setArama(""); }}>Süzgeçleri temizle</button></p>}
             </section>
+            <Olaylar veri={veri} simdi={simdi} sec={setSecili} izin={izin} izinIste={izinIste} />
             <Adimlar veri={veri} isaretle={adimIsaretle} />
             <YayinHatti veri={veri} sec={setSecili} />
             <Loglar veri={veri} loglar={loglar} logYukle={logYukle} />
-            <footer className="sayfa-alt"><span className={`canli-nokta${bagli ? "" : " kopuk"}`} /><span>{bagli ? "Canlı veriler bağlı" : "Yeniden bağlanılıyor"}</span><span className="sayfa-alt-zaman">Son senkron: {senkron} sn önce</span></footer>
+            <Denetim denetim={veri.denetim} denetle={denetle} denetleniyor={denetleniyor} simdi={simdi} />
+            <footer className="sayfa-alt"><span className={`canli-nokta${bagli ? "" : " kopuk"}`} /><span>{bagli ? "Canlı veriler bağlı" : "Yeniden bağlanılıyor"}</span>{veri.atlas?.commit && <span title={veri.atlas.mesaj ?? undefined}>· Atlas {veri.atlas.commit} · {goreli(veri.atlas.baslangic, simdi)} açıldı</span>}{veri.atlas?.derlemeEski && <span className="sayfa-alt-uyari">· arayüz eski derleme ({veri.atlas.derleme}) — scripts/guncelle.ps1</span>}<span className="sayfa-alt-zaman">Son senkron: {senkron} sn önce</span></footer>
           </div>
           {p ? <Detay veri={veri} p={p} simdi={simdi} sec={setSecili} repoAc={veri.ortam === "yerel" && !girisGerekli ? repoAc : undefined} /> : <aside className="panel detay"><p className="sessiz">İzlenecek projeler manifest eklendiğinde burada görünecek.</p></aside>}
         </div>

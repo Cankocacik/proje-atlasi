@@ -16,7 +16,9 @@ export function Kenar({ veri, cikis }: { veri: Anlik; cikis?: () => void }) {
   const menu = [
     { href: "#ozet", ad: "Genel bakış", ikon: "ev" as const },
     { href: "#harita", ad: "Proje haritası", ikon: "harita" as const },
+    { href: "#olaylar", ad: "Olay günlüğü", ikon: "zil" as const },
     { href: "#loglar", ad: "Sunucu & loglar", ikon: "kod" as const },
+    { href: "#denetim", ad: "Kurulum denetimi", ikon: "kalkan" as const },
     { href: "#adimlar", ad: "Sıradaki adımlar", ikon: "liste" as const },
     { href: "#hat", ad: "Yayın hattı", ikon: "hat" as const },
     { href: "#aktivite", ad: "Son commitler", ikon: "nabiz" as const },

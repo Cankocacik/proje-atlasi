@@ -1,12 +1,20 @@
 import { spawn } from "node:child_process";
 import { watch } from "node:fs";
-import { basename, dirname } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { doktor } from "./doktor.js";
+import { saglikGecmisi } from "./gecmis.js";
 import { cerezOku, denemeSiniri, jetonCoz, jetonUret, parolaDogru } from "./kimlik.js";
+import { olayDeposu, olaylariBul } from "./olaylar.js";
 import { ortamOku } from "./ortam.js";
 import { portalGirisi } from "./portalGiris.js";
 import { logIzleyici, pm2Listesi, yenidenBaslamaIzleyici } from "./pm2.js";
+import { atlasSurumu } from "./surum.js";
 import { adimIsaretle, manifestOku, MANIFEST_YOLU, topla } from "./topla.js";
 
+const KOK = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const VERI = join(KOK, "data");
+const DENETIM_ARALIK_MS = 30 * 60_000;
 const CEREZ = "atlas_oturum";
 const YEREL_HOST = /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/;
 const PM2_ARALIK_MS = 10_000;
@@ -64,6 +72,8 @@ export function istekUygun(req, izinliHost) {
  *   POST /api/yenile   önbellekleri atlayıp hemen topla
  *   POST /api/adim     { id, tamam }
  *   POST /api/ac       { id } repo klasörünü VS Code'da aç (yalnız yerel ortam + yerel istek)
+ *   GET  /api/surum    Atlas'ın çalışan commit'i, derleme işareti, açılış zamanı
+ *   GET  /api/doktor   son kurulum denetimi · POST /api/doktor şimdi denetle
  */
 export function apiOlustur(ayar = ortamOku()) {
   let son = null;
@@ -73,6 +83,32 @@ export function apiOlustur(ayar = ortamOku()) {
   let izleyici = null;
   const istemciler = new Set();
   const sinir = denemeSiniri();
+
+  // — sürüm, olay günlüğü, erişilebilirlik geçmişi, kurulum denetimi —
+  let atlasBilgi = null;
+  let denetim = null;
+  let denetleniyor = null;
+  const olaylar = olayDeposu({ dosya: join(VERI, "olaylar.json") });
+  const saglikKaydi = saglikGecmisi({ dosya: join(VERI, "saglik-gecmisi.json") });
+
+  async function denetle() {
+    denetleniyor ??= (async () => {
+      const onceki = denetim;
+      try {
+        denetim = await doktor({ ayar, manifest: await manifestOku(), kok: KOK });
+      } catch (e) {
+        denetim = { zaman: new Date().toISOString(), sonuclar: [{ ad: "Denetim", durum: "hata", mesaj: e.message }], ozet: { ok: 0, uyari: 0, hata: 1, atla: 0 } };
+      }
+      const once = onceki?.ozet.hata ?? 0;
+      const simdi = denetim.ozet.hata;
+      if (simdi > 0 && once === 0) await olaylar.ekle([{ seviye: "hata", tur: "denetim", metin: `Kurulum denetimi ${simdi} sorun buldu` }]);
+      if (simdi === 0 && once > 0) await olaylar.ekle([{ seviye: "iyi", tur: "denetim", metin: "Kurulum denetimi temiz" }]);
+      return denetim;
+    })().finally(() => {
+      denetleniyor = null;
+    });
+    return denetleniyor;
+  }
 
   // — pm2 + log —
   let surecHam = null;
@@ -101,7 +137,9 @@ export function apiOlustur(ayar = ortamOku()) {
     calisiyor = (async () => {
       try {
         if (secenek.zorla) await pm2Tazele();
-        son = await topla({ ...secenek, ayar, surecler: surecOzeti() });
+        const yeni = await topla({ ...secenek, ayar, surecler: surecOzeti(), saglikKaydi, denetim });
+        await olaylar.ekle(olaylariBul(son, yeni));
+        son = { ...yeni, atlas: atlasBilgi, denetim, olaylar: await olaylar.son(60) };
         manifestHatasi = null;
       } catch (e) {
         manifestHatasi = `projeler.json okunamadı: ${e.message}`;
@@ -123,6 +161,11 @@ export function apiOlustur(ayar = ortamOku()) {
       } catch {
         // manifest bozuksa yenile() hatayı ekrana taşır
       }
+      atlasBilgi = await atlasSurumu(KOK);
+      await olaylar.ekle([{ seviye: "bilgi", tur: "atlas", metin: `Atlas başlatıldı (${atlasBilgi.commit ?? "sürüm bilinmiyor"} · ${ayar.ortam})` }]);
+      // Denetim dışarıya istek atar; açılışı bekletmesin, bitince ekran tazelenir.
+      denetle().then(() => yenile());
+      zamanlayicilar.push(setInterval(() => denetle().then(() => yenile()), DENETIM_ARALIK_MS));
       await pm2Tazele();
       if (surecHam) {
         await loglar.tara(surecHam);
@@ -244,6 +287,14 @@ export function apiOlustur(ayar = ortamOku()) {
         // Yol kullanıcıdan değil manifestten gelir; yine de kabuğa tırnaklı verilir.
         spawn("code", [`"${proje.repo}"`], { shell: true, detached: true, stdio: "ignore", windowsHide: true }).unref();
         return json(res, 200, { ok: true });
+      }
+      if (req.method === "GET" && yol === "/api/surum") {
+        return json(res, 200, atlasBilgi);
+      }
+      if (yol === "/api/doktor" && (req.method === "GET" || req.method === "POST")) {
+        const sonuc = req.method === "POST" || !denetim ? await denetle() : denetim;
+        if (req.method === "POST") yenile();
+        return json(res, 200, sonuc);
       }
       return json(res, 404, { hata: "Bulunamadı." });
     } catch (e) {

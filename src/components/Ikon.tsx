@@ -18,11 +18,17 @@ export function ProjeIkon({ tur, boyut = 20 }: { tur: IkonTur; boyut?: number })
   }
 }
 
-type SvgAd = "ev" | "harita" | "hat" | "nabiz" | "liste" | "yenile" | "arti" | "eksi" | "uyari" | "kod" | "dis" | "ara" | "klasor" | "gorev";
+type SvgAd = "ev" | "harita" | "hat" | "nabiz" | "liste" | "yenile" | "arti" | "eksi" | "uyari" | "kod" | "dis" | "ara" | "klasor" | "gorev" | "zil" | "kalkan" | "indir";
 
 export function Svg({ ad, boyut = 18 }: { ad: SvgAd; boyut?: number }) {
   const p = { width: boyut, height: boyut, viewBox: "0 0 24 24", "aria-hidden": true, ...ORTAK, strokeWidth: 1.8 };
   switch (ad) {
+    case "zil":
+      return <svg {...p}><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></svg>;
+    case "kalkan":
+      return <svg {...p}><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z" /><path d="m9 12 2 2 4-4" /></svg>;
+    case "indir":
+      return <svg {...p}><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>;
     case "ara":
       return <svg {...p}><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>;
     case "klasor":
