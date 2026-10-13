@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Anlik, Asama, Proje } from "../types";
+import type { Anlik, Asama, ManifestSorunu, Proje } from "../types";
 import { durumEtiketi } from "../lib/etiket";
 import { goreli } from "../lib/zaman";
 import { RadarLogo, Svg } from "./Ikon";
@@ -204,5 +204,25 @@ export function YayinHatti({ veri, sec }: { veri: Anlik; sec: (id: string) => vo
       })}
       </div>
     </section>
+  );
+}
+
+/** projeler.json elle düzenlenir; yazım hatası ekranın üstünde açıkça görünür (kaydedince kaybolur). */
+export function ManifestSorunlari({ sorunlar }: { sorunlar: ManifestSorunu[] | undefined }) {
+  if (!sorunlar?.length) return null;
+  const hata = sorunlar.filter((s) => s.seviye === "hata").length;
+  return (
+    <details className={`manifest-serit${hata ? " hata" : ""}`} open={hata > 0}>
+      <summary>
+        <Svg ad="uyari" boyut={15} />
+        <span>projeler.json: {hata ? `${hata} hata` : ""}{hata && sorunlar.length > hata ? " · " : ""}{sorunlar.length > hata ? `${sorunlar.length - hata} uyarı` : ""}</span>
+        <span className="sessiz mono">dosyayı kaydedince ekran yenilenir</span>
+      </summary>
+      <ul>
+        {sorunlar.map((s, i) => (
+          <li key={i}><span className="mono">{s.yer}</span> {s.mesaj}</li>
+        ))}
+      </ul>
+    </details>
   );
 }

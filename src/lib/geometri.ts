@@ -1,20 +1,9 @@
 // Harita çizgileri için saf geometri (test/geometri.test.ts).
 
-export interface Kutu {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-export const KART_YUKSEKLIK = 124;
-export const HUB_YUKSEKLIK = 136;
-
-/** Kart ise kutusu, nokta ise sıfır boyutlu kutu (merkez = konum). */
-export function kutuBul(p: { kart?: boolean; ikon: string; konum: { x: number; y: number; w?: number } }): Kutu {
-  if (!p.kart) return { x: p.konum.x, y: p.konum.y, w: 0, h: 0 };
-  return { x: p.konum.x, y: p.konum.y, w: p.konum.w ?? 190, h: p.ikon === "hub" ? HUB_YUKSEKLIK : KART_YUKSEKLIK };
-}
+// Kart ölçüleri sunucuyla ortak (manifest çakışma denetimi de aynısını kullanır).
+import type { Kutu } from "../../server/kutu.js";
+export type { Kutu } from "../../server/kutu.js";
+export { HUB_YUKSEKLIK, KART_YUKSEKLIK, kutuBul } from "../../server/kutu.js";
 
 export function merkez(k: Kutu) {
   return { x: k.x + k.w / 2, y: k.y + k.h / 2 };

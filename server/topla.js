@@ -4,8 +4,9 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchGerekirse, gitOzeti } from "./git.js";
 import { githubOzeti } from "./github.js";
+import { manifestDogrula } from "./manifest.js";
 import { saglikKontrol } from "./saglik.js";
-import { akisiBirlestir, ASAMA_SIRA, durumBul, haftalikOzet, uyarilariUret } from "./turet.js";
+import { akisiBirlestir, akisSec, ASAMA_SIRA, durumBul, haftalikOzet, uyarilariUret } from "./turet.js";
 
 const KOK = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const MANIFEST_YOLU = resolve(KOK, "projeler.json");
@@ -68,8 +69,10 @@ export async function topla({ zorla = false, ayar, surecler = null, saglikKaydi 
     return p.repo ? { var: false, kaynak: "git" } : null;
   }
 
+  // Kimliği/konumu bozuk düğüm ekranı çökertmesin: dışarıda kalır, manifestSorunlari'nda listelenir.
+  const gecerli = (m.projeler ?? []).filter((p) => p?.id && p.ad && typeof p.konum?.x === "number" && typeof p.konum?.y === "number");
   const projeler = await Promise.all(
-    m.projeler.map(async (p) => {
+    gecerli.map(async (p) => {
       const [git, saglik] = await Promise.all([
         gitGetir(p),
         p.saglik
@@ -116,6 +119,7 @@ export async function topla({ zorla = false, ayar, surecler = null, saglikKaydi 
   return {
     zaman: new Date().toISOString(),
     ortam: ayar.ortam,
+    manifestSorunlari: manifestDogrula(m),
     gorunum: m.gorunum ?? {},
     harita: m.harita ?? { genislik: 780, yukseklik: 540 },
     akislar: m.akislar ?? [],
@@ -126,7 +130,7 @@ export async function topla({ zorla = false, ayar, surecler = null, saglikKaydi 
         : git,
     })),
     surecler: surecler?.map(({ outLog: _o, errLog: _e, ...s }) => s) ?? null,
-    akis: tumAkis.slice(0, 40),
+    akis: akisSec(tumAkis, projeler.map((p) => p.id)),
     hafta: haftalikOzet(tumAkis),
     adimlar,
   };

@@ -14,6 +14,14 @@ export interface Uyari {
   metin: string;
   kaynak: "elle" | "git" | "saglik" | "pm2" | "denetim";
   seviye: "orta" | "yuksek";
+  /** Elle uyarının eklendiği gün (YYYY-AA-GG). */
+  tarih?: string;
+}
+
+export interface ManifestSorunu {
+  seviye: "hata" | "uyari";
+  yer: string;
+  mesaj: string;
 }
 
 export interface Proje {
@@ -101,6 +109,7 @@ export interface Anlik {
   hafta: { tarih: string; gun: string; sayi: number; bugun: boolean }[];
   adimlar: Adim[];
   manifestHatasi?: string | null;
+  manifestSorunlari?: ManifestSorunu[];
   atlas?: AtlasBilgi | null;
   denetim?: Denetim | null;
   olaylar?: Olay[];

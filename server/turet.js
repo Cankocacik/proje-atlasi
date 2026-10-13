@@ -11,7 +11,11 @@ export const HATA_ESIGI = 10;
  */
 export function uyarilariUret(proje, git, saglik, ek = {}) {
   const sunucu = ek.ortam === "sunucu";
-  const liste = (proje.uyarilar ?? []).map((metin) => ({ metin, kaynak: "elle", seviye: "orta" }));
+  // Elle uyarı düz metin ya da { metin, tarih, seviye } olabilir; tarih notun ne zamandır durduğunu gösterir.
+  const liste = (proje.uyarilar ?? [])
+    .map((u) => (typeof u === "string" ? { metin: u } : u ?? {}))
+    .filter((u) => u.metin)
+    .map((u) => ({ metin: u.metin, kaynak: "elle", seviye: u.seviye === "yuksek" ? "yuksek" : "orta", ...(u.tarih ? { tarih: u.tarih } : {}) }));
   if (git && !git.var) {
     if (git.kaynak === "github") liste.push({ metin: `GitHub okunamadı (${git.hata})`, kaynak: "git", seviye: "orta" });
     else liste.push({ metin: `Repo okunamadı: ${proje.repo}`, kaynak: "git", seviye: "yuksek" });
@@ -72,7 +76,19 @@ export function akisiBirlestir(projeler, sinir = 40) {
     .map(({ oncelik: _o, ...c }) => c);
 }
 
-const GUN_ADLARI = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+/**
+ * Ekrana giden akış: genel son `genel` commit + her projenin kendi son `projeBasi` commit'i.
+ * Yalnız genel sınır olsaydı az commit alan modülün detayı "commit yok" derdi.
+ */
+export function akisSec(tumAkis, projeIdleri, { genel = 40, projeBasi = 4 } = {}) {
+  const secilen = new Map(tumAkis.slice(0, genel).map((c) => [c.hash, c]));
+  for (const id of projeIdleri) {
+    for (const c of tumAkis.filter((x) => x.projeId === id).slice(0, projeBasi)) secilen.set(c.hash, c);
+  }
+  return [...secilen.values()].sort((a, b) => (a.tarih < b.tarih ? 1 : a.tarih > b.tarih ? -1 : 0));
+}
+
+const GUN_ADLARI =["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
 
 function yerelGunAnahtari(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

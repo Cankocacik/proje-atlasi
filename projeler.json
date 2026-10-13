@@ -34,7 +34,10 @@
       "url": "https://rosbelportal.com",
       "aciklama": "Sipariş onayından finansa tüm üretim akışı tek portalda.",
       "uyarilar": [
-        "Numune Talep ve Bulk onay migration'ları sunucuda bekliyor"
+        {
+          "metin": "Numune Talep ve Bulk onay migration'ları sunucuda bekliyor",
+          "tarih": "2026-10-06"
+        }
       ],
       "adimlar": [
         {
@@ -65,7 +68,10 @@
       "url": "https://mutabiko.com",
       "aciklama": "Cari mutabakat modülünden doğan bağımsız ürün.",
       "uyarilar": [
-        "Ekstre karşılaştırma aracı (7e46dd5) canlıya alınmayı bekliyor"
+        {
+          "metin": "Ekstre karşılaştırma aracı (7e46dd5) canlıya alınmayı bekliyor",
+          "tarih": "2026-10-13"
+        }
       ],
       "adimlar": [
         {
@@ -139,7 +145,10 @@
       "surum": "canlı 2.2.0",
       "aciklama": "Gümrük aracı ve finans rapor paketi.",
       "uyarilar": [
-        "2.2.2 inceleme paketi hazır, canlıda 2.2.0"
+        {
+          "metin": "2.2.2 inceleme paketi hazır, canlıda 2.2.0",
+          "tarih": "2026-10-09"
+        }
       ],
       "adimlar": [
         {
@@ -166,7 +175,10 @@
       "surum": "laravel · 688da50",
       "aciklama": "Servis/garanti sistemi; Laravel sürümü 11.10'da canlıya alındı.",
       "uyarilar": [
-        "G5 doğrulaması bekliyor"
+        {
+          "metin": "G5 doğrulaması bekliyor",
+          "tarih": "2026-10-11"
+        }
       ],
       "adimlar": [
         {
@@ -274,7 +286,10 @@
       ],
       "aciklama": "İki dilli numune talep akışı, A4 fiş ve QR.",
       "uyarilar": [
-        "Migration'lar sunucuda bekliyor"
+        {
+          "metin": "Migration'lar sunucuda bekliyor",
+          "tarih": "2026-10-06"
+        }
       ],
       "adimlar": [
         {
@@ -323,7 +338,10 @@
       ],
       "aciklama": "Reklamasyon tahsisini ERP'ye doğrudan yazan bot, 5 denetimle.",
       "uyarilar": [
-        "Sunucu kurulumu sürüyor"
+        {
+          "metin": "Sunucu kurulumu sürüyor",
+          "tarih": "2026-10-08"
+        }
       ],
       "adimlar": [
         {
@@ -358,7 +376,9 @@
       },
       "repo": "C:/proje-atlasi",
       "github": "Cankocacik/proje-atlasi",
-      "pm2": ["proje-atlasi"],
+      "pm2": [
+        "proje-atlasi"
+      ],
       "saglik": "https://atlas.rosbelportal.com/api/oturum",
       "url": "https://atlas.rosbelportal.com",
       "aciklama": "Bu ekran. Sunucuda pm2 + Cloudflare Tunnel ile çalışır; kurulum denetiminin sorunları burada uyarı olarak görünür."

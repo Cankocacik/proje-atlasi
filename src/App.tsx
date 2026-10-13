@@ -3,7 +3,7 @@ import type { Proje } from "./types";
 import { useAtlas } from "./hooks/useAtlas";
 import { Harita } from "./components/Harita";
 import { Detay } from "./components/Detay";
-import { Adimlar, Kenar, Liste, OzetSeridi, YayinHatti } from "./components/Paneller";
+import { Adimlar, Kenar, Liste, ManifestSorunlari, OzetSeridi, YayinHatti } from "./components/Paneller";
 import { Giris } from "./components/Giris";
 import { Loglar } from "./components/Loglar";
 import { Olaylar } from "./components/Olaylar";
@@ -65,6 +65,7 @@ export function App() {
         </header>
 
         {(hata || veri.manifestHatasi) && <div className="hata-serit" role="alert">{veri.manifestHatasi ?? hata}</div>}
+        <ManifestSorunlari sorunlar={veri.manifestSorunlari} />
         <OzetSeridi veri={veri} />
 
         <div className="atlas-izgara">

@@ -100,3 +100,13 @@ describe("git yardımcıları", () => {
     expect(logSatirlariniAyristir(null)).toEqual([]);
   });
 });
+
+describe("akisSec", async () => {
+  const { akisSec } = await import("../server/turet.js");
+  const c = (hash, projeId, gun) => ({ hash, projeId, tarih: `2026-10-${String(gun).padStart(2, "0")}T10:00:00Z` });
+  it("genel sınırın dışında kalan projenin son commitlerini de taşır, tarihe göre sıralar", () => {
+    const tum = [c("a", "rosbel", 13), c("b", "rosbel", 12), c("x", "numune", 6), c("y", "numune", 5)];
+    const r = akisSec(tum, ["rosbel", "numune"], { genel: 2, projeBasi: 1 });
+    expect(r.map((x) => x.hash)).toEqual(["a", "b", "x"]);
+  });
+});

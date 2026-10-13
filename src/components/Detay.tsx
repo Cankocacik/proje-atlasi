@@ -1,6 +1,6 @@
 import type { Anlik, Proje } from "../types";
 import { durumEtiketi } from "../lib/etiket";
-import { goreli, tarihSaat } from "../lib/zaman";
+import { gunFarki, goreli, tarihSaat } from "../lib/zaman";
 import { ASAMA_ETIKET } from "../lib/etiket";
 import { projeIlerlemesi, projeKapsami } from "../lib/ilerleme";
 import { kutuAraligi } from "../lib/olay";
@@ -117,7 +117,9 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
             <div key={u.metin} className={`uyari-kutu${u.seviye === "orta" ? " orta" : ""}`}>
               <span style={{ flex: "none", marginTop: 1 }}><Svg ad="uyari" boyut={16} /></span>
               <span style={{ flex: 1 }}>{u.metin}</span>
-              <span className="mono" style={{ fontSize: 10, opacity: 0.75 }}>{KAYNAK_AD[u.kaynak]}</span>
+              <span className="mono" style={{ fontSize: 10, opacity: 0.75, whiteSpace: "nowrap" }} title={u.tarih ? `${u.tarih} tarihinde eklendi` : undefined}>
+                {KAYNAK_AD[u.kaynak]}{u.tarih ? ` · ${gunFarki(u.tarih, simdi)} g` : ""}
+              </span>
             </div>
           ))}
         </div>

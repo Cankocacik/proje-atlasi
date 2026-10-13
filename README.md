@@ -19,6 +19,9 @@ npm start         # http://127.0.0.1:4321
 Geliştirirken: `npm run dev` (aynı adres, anında yenilenir). Test: `npm test`.
 Masaüstünden tek tıkla açmak için `baslat.cmd`.
 
+Kurulum denetimi: `npm run doktor` (sunucu ayarlarıyla) · `npm run doktor -- --yerel` (PC).
+Sunucuda kurulum/güncelleme: `scripts\kurulum.ps1` · `scripts\guncelle.ps1`.
+
 ## Veri nereden gelir
 
 | Ne | Kaynak | Sıklık |
@@ -27,7 +30,10 @@ Masaüstünden tek tıkla açmak için `baslat.cmd`.
 | Geride kalan commit (sunucuda "canlıya alınmadı") | `git fetch` | `fetchDakika` (5 dk) |
 | Repo bu makinede yoksa commitler | GitHub API (`github`, `.env` → `GITHUB_TOKEN`) | `githubSaniye` (5 dk) |
 | pm2 süreç durumu + loglar | `pm2 jlist` + log dosyaları (yalnız pm2 olan makinede) | 10 sn / 2 sn |
-| Site ayakta mı, yanıt süresi | `saglik` adresine GET (5xx/ağ hatası = çökük, 401/403 = ayakta) | `saglikSaniye` (60 sn) |
+| Site ayakta mı, yanıt süresi | `saglik` adresine GET (2xx/3xx ve 401/403 = ayakta; 404, 5xx, ağ hatası = çökük) | `saglikSaniye` (60 sn) |
+| Site erişim geçmişi (24 sa, 30 dk kutular) | sağlık yoklamaları → `data/saglik-gecmisi.json` | her yoklamada |
+| Olay günlüğü (durum değişimleri) | ardışık anlık görüntü farkı → `data/olaylar.json` | her taramada |
+| Kurulum denetimi | `server/doktor.js` (aynı kontroller `npm run doktor`'da) | açılışta + 30 dk |
 | Aşama, açıklama, elle uyarı, sıradaki adımlar, harita konumu | `projeler.json` | dosya kaydedilince anında |
 | Adım işaretleri | `data/adimlar.json` (ekrandan) | anında |
 
@@ -46,6 +52,7 @@ Masaüstünden tek tıkla açmak için `baslat.cmd`.
 | `repo` | git klasörü. `kapsam`: yalnız bu yollar (modül), `haric`: bu yollar hariç |
 | `github`, `dal` | `sahip/ad` — `repo` bu makinede yoksa commitler buradan |
 | `pm2` | izlenecek pm2 süreç adları (durmuş süreç, sık yeniden başlama, hata satırı → uyarı) |
+| `atlasKendisi` | `true` olan düğüm Atlas'ın kendisidir; kurulum denetiminin hata/uyarıları buna düşer |
 | `saglik`, `url` | izlenecek adres, "aç" bağlantısı |
 | `surum`, `aciklama` | elle yazılan sürüm ve kısa açıklama |
 | `uyarilar` | elle eklenen dikkat satırları (dizi) |

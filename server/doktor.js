@@ -6,6 +6,7 @@ import { lookup } from "node:dns/promises";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { manifestDogrula } from "./manifest.js";
 import { pm2Listesi } from "./pm2.js";
 
 // — saf yardımcılar (test/doktor.test.js) —
@@ -119,6 +120,18 @@ export async function doktor({ ayar, manifest, kok, fetchFn = fetch, pm2Fn = pm2
     return isaret.startsWith(head.cikti) || head.cikti.startsWith(isaret)
       ? { durum: "ok", mesaj: `güncel (${isaret})` }
       : { durum: "uyari", mesaj: `arayüz ${isaret}'den derlenmiş, kod ${head.cikti}`, cozum: "scripts/guncelle.ps1 ya da npm run build → pm2 restart proje-atlasi" };
+  }));
+
+  kontroller.push(zamanli("projeler.json", async () => {
+    const sorunlar = manifestDogrula(manifest);
+    const hatalar = sorunlar.filter((s) => s.seviye === "hata");
+    const ilk = (sorunlar.find((s) => s.seviye === "hata") ?? sorunlar[0]);
+    if (!sorunlar.length) return { durum: "ok", mesaj: `${projeler.length} düğüm, sorun yok` };
+    return {
+      durum: hatalar.length ? "hata" : "uyari",
+      mesaj: `${sorunlar.length} sorun — ilki: ${ilk.yer}: ${ilk.mesaj}`,
+      cozum: "Tamamı ekranın üstündeki manifest şeridinde; dosyayı düzeltip kaydet (yeniden başlatma gerekmez)",
+    };
   }));
 
   // Aynı repoyu paylaşan projeler için tek yoklama.

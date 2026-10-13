@@ -281,3 +281,12 @@ textarea.alan { padding: 10px 12px; resize: vertical; }
 .log-zaman { color: var(--cok-sessiz); user-select: none; white-space: nowrap; }
 .sayfa-alt-uyari { color: var(--warn); }
 .erisim-deger { white-space: nowrap; }
+
+/* Manifest sorunları */
+.manifest-serit { border: 1px solid #f6af6540; background: #f6af6508; border-radius: 9px; color: #edc695; font-size: 12.5px; }
+.manifest-serit.hata { border-color: #f67f6555; background: #f67f650a; color: #f1b7a6; }
+.manifest-serit summary { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; padding: 11px 14px; cursor: pointer; list-style: none; }
+.manifest-serit summary::-webkit-details-marker { display: none; }
+.manifest-serit summary .sessiz { margin-left: auto; font-size: 10.5px; }
+.manifest-serit ul { margin: 0; padding: 0 14px 12px 38px; display: flex; flex-direction: column; gap: 5px; }
+.manifest-serit li .mono { color: var(--yazi-2); font-size: 11px; }
