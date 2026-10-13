@@ -307,3 +307,14 @@ textarea.alan { padding: 10px 12px; resize: vertical; }
 .yayin-adim-alt { display: block; font-size: 10px; margin-top: 2px; }
 .kopyala { flex: none; border: 1px solid var(--cizgi-2); background: var(--panel); color: var(--soluk); border-radius: 4px; padding: 2px 6px; font: 10px var(--mono); min-height: 24px; }
 .kopyala:hover { color: var(--yazi); }
+
+/* İç sağlık (proje detayı) */
+.ic-saglik { --c: var(--idle); display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid color-mix(in srgb, var(--c) 35%, var(--cizgi)); border-radius: 8px; }
+.ic-saglik.hata { --c: #f67f65; color: #f1b7a6; font-size: 11.5px; }
+.ic-saglik ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
+.ic-saglik li { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 6px; align-items: baseline; color: var(--yazi-2); }
+.ic-saglik li .mono { font-size: 10px; }
+.ic-saglik li.ok .ic-isaret { color: var(--live); }
+.ic-saglik li.bozuk { color: #f1b7a6; } .ic-saglik li.bozuk .ic-isaret { color: #f67f65; }
+.ic-saglik li.bekliyor .ic-isaret { color: var(--warn); }
+.ic-saglik code { font: 10px var(--mono); color: var(--yazi-2); }

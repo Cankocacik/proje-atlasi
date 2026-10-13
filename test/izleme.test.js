@@ -190,3 +190,13 @@ describe("kodAyakta", async () => {
     for (const k of [400, 404, 429, 500, 502, 530]) expect(kodAyakta(k)).toBe(false);
   });
 });
+
+describe("iç sağlık olayları", () => {
+  const ic = (durum, kontroller = []) => ({ erisim: "ok", durum, kontroller, migration: null });
+  it("durum geçişini yazar, sorunlu kontrolleri adıyla verir", () => {
+    const once = { ortam: "sunucu", projeler: [{ id: "rosbel", ad: "Rosbel Portal", icDurum: ic("healthy") }] };
+    const sonra = { ortam: "sunucu", projeler: [{ id: "rosbel", ad: "Rosbel Portal", icDurum: ic("unhealthy", [{ ad: "ERP veritabanı", ok: false }, { ad: "Portal veritabanı", ok: true }]) }] };
+    expect(olaylariBul(once, sonra)).toEqual([{ seviye: "hata", tur: "icsaglik", projeId: "rosbel", metin: "Rosbel Portal: iç sağlık bozuk — ERP veritabanı" }]);
+    expect(olaylariBul(sonra, once)[0]).toMatchObject({ seviye: "iyi", metin: "Rosbel Portal: iç sağlık düzeldi" });
+  });
+});

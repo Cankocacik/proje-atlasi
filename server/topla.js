@@ -4,6 +4,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchGerekirse, gitOzeti } from "./git.js";
 import { githubOzeti } from "./github.js";
+import { icSaglikOku, icSaglikUyarilari } from "./icSaglik.js";
 import { manifestDogrula } from "./manifest.js";
 import { saglikKontrol } from "./saglik.js";
 import { akisiBirlestir, akisSec, ASAMA_SIRA, durumBul, haftalikOzet, uyarilariUret, yayinAdimlari } from "./turet.js";
@@ -84,10 +85,17 @@ export async function topla({ zorla = false, ayar, surecler = null, saglikKaydi 
           : null,
       ]);
       const saglikGecmisi = p.saglik && saglikKaydi ? await saglikKaydi.ozet(p.saglik) : null;
+      // İç sağlık ucu loopback'tedir: yalnız sunucuda anlamlı (PC'de yerel geliştirme sunucusuna gitmesin).
+      const icDurum = p.icSaglik?.url && ayar.ortam === "sunucu"
+        ? await onbellekli(`ic:${p.icSaglik.url}`, saglikMs, zorla, () => icSaglikOku(p.icSaglik))
+        : null;
       const projeSurecleri = surecler
         ? (p.pm2 ?? []).map((ad) => surecler.find((s) => s.ad === ad) ?? { ad, durum: "bulunamadı", sonSaatYenidenBaslama: 0, hata15: 0 })
         : [];
-      const uyarilar = uyarilariUret(p, git, saglik, { ortam: ayar.ortam, surecler: projeSurecleri });
+      const uyarilar = [
+        ...uyarilariUret(p, git, saglik, { ortam: ayar.ortam, surecler: projeSurecleri }),
+        ...icSaglikUyarilari(icDurum, { migrationUyarisi: p.icSaglik?.migrationUyarisi !== false }),
+      ];
       if (p.atlasKendisi && denetim) {
         for (const d of denetim.sonuclar) {
           if (d.durum === "hata" || d.durum === "uyari") {
@@ -100,6 +108,7 @@ export async function topla({ zorla = false, ayar, surecler = null, saglikKaydi 
         git,
         saglik,
         saglikGecmisi,
+        icDurum,
         surecler: projeSurecleri.map((s) => s.ad),
         uyarilar,
         durum: durumBul(p.asama, uyarilar),

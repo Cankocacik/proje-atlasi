@@ -65,6 +65,26 @@ erişim** (Cloudflare'in kendi 404'ü = tünel kuralı yok; 530 = tünel kapalı
 Atlas açılışta ve 30 dakikada bir kendini denetler; hata çıkarsa haritadaki **Proje Atlası**
 düğümü kırmızıya döner ve olay günlüğüne yazılır. Her satır sorunu çözecek komutu da söyler.
 
+## İç sağlık (veritabanı, ERP, migration defteri)
+
+Atlas sunucuda, uygulamaların kendi ayrıntılı sağlık ucunu loopback'ten okur
+(`projeler.json` → `icSaglik`): Rosbel `http://127.0.0.1:4000/api/health/detailed`,
+Mutabiko `http://127.0.0.1:4100/api/health/detailed`. Proje detayında **İÇ SAĞLIK** kutusu:
+portal veritabanı, ERP veritabanı, Redis (kullanılıyorsa), onay tutarlılığı (ERP'ye yazılıp
+portala yazılamamış onay alarmı) ve migration defteri. Bozulan kontrol kırmızı uyarı + olay
+günlüğü + (açıksa) tarayıcı bildirimi olur.
+
+Rosbel'in ucu canlıda **token ister**. Bir kez:
+
+1. Rosbel backend `.env`'inde `HEALTH_DETAILED_TOKEN` yoksa ekle (en az 16 karakter; rastgele
+   üretmek için `C:\proje-atlasi`'da `npm run sir` çıktısının `=`'den sonrası kullanılabilir) →
+   `pm2 restart siparis-backend --update-env`.
+2. Aynı değeri Atlas `.env`'ine `ROSBEL_HEALTH_TOKEN=` olarak yaz → `pm2 restart proje-atlasi`.
+
+Kurulum denetimi "İç sağlık · Rosbel Portal" satırında token yoksa / reddedildiyse söyler.
+Migration defteri "N bekliyor" diyorsa önce `npm run migrate:verify` (defter bayat olabilir);
+bilerek bayat bırakılan bir defter gürültü yapıyorsa `icSaglik.migrationUyarisi: false`.
+
 ## Canlıya bekleyen iş ve yayın adımları
 
 Atlas izlediği repolarda beş dakikada bir `git fetch` yapar. Sunucudaki kopya GitHub'ın gerisindeyse

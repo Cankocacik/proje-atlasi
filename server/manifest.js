@@ -54,6 +54,10 @@ export function manifestDogrula(m, simdi = new Date()) {
     if (p?.pm2 != null && !(Array.isArray(p.pm2) && p.pm2.every((x) => typeof x === "string"))) ekle("hata", yer, "pm2 süreç adları dizisi olmalı");
     if (p?.kapsam != null && !Array.isArray(p.kapsam)) ekle("hata", yer, "kapsam yol dizisi olmalı");
 
+    if (p?.icSaglik != null) {
+      if (!urlMi(p.icSaglik.url)) ekle("hata", yer, "icSaglik.url geçerli bir http(s) adresi değil");
+      if (p.icSaglik.tokenEnv != null && !/^[A-Z_][A-Z0-9_]*$/.test(p.icSaglik.tokenEnv)) ekle("hata", yer, "icSaglik.tokenEnv BÜYÜK_HARF_ALT_ÇİZGİ bir ortam değişkeni adı olmalı (token'ın kendisi değil)");
+    }
     if (p?.yayin != null) {
       const kurallar = p.yayin.adimlar;
       if (!Array.isArray(kurallar)) ekle("hata", yer, "yayin.adimlar dizi olmalı");

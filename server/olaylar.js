@@ -20,6 +20,15 @@ export function olaylariBul(onceki, simdiki) {
         : { seviye: "hata", tur: "site", projeId: p.id, metin: `${p.ad}: site yanıt vermiyor (${p.saglik.kod ?? p.saglik.hata})` });
     }
 
+    const oIc = o.icDurum?.durum;
+    const pIc = p.icDurum?.durum;
+    if (oIc && pIc && oIc !== pIc) {
+      const sorunlu = p.icDurum.kontroller?.filter((k) => !k.ok).map((k) => k.ad) ?? [];
+      olaylar.push(pIc === "healthy"
+        ? { seviye: "iyi", tur: "icsaglik", projeId: p.id, metin: `${p.ad}: iç sağlık düzeldi` }
+        : { seviye: pIc === "unhealthy" ? "hata" : "uyari", tur: "icsaglik", projeId: p.id, metin: `${p.ad}: iç sağlık ${pIc === "unhealthy" ? "bozuk" : "zayıf"}${sorunlu.length ? ` — ${sorunlu.join(", ")}` : ""}` });
+    }
+
     // Commit/yayın olayları yalnız repo düzeyindeki projelerde (modüller aynı commit'i tekrar etmesin).
     if (p.kapsam?.length) continue;
     const oSon = o.git?.son;

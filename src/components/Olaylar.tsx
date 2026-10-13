@@ -17,6 +17,7 @@ const TUR_AD: Record<string, string> = {
   yayin: "yayın",
   denetim: "kurulum",
   atlas: "atlas",
+  icsaglik: "iç sağlık",
 };
 
 const sorunMu = (o: Olay) => o.seviye === "hata" || o.seviye === "uyari";

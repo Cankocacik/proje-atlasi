@@ -80,6 +80,10 @@
             "bilgi": true
           }
         ]
+      },
+      "icSaglik": {
+        "url": "http://127.0.0.1:4000/api/health/detailed",
+        "tokenEnv": "ROSBEL_HEALTH_TOKEN"
       }
     },
     {
@@ -152,6 +156,9 @@
             "not": "build sırasında eski süreç ISR sayfalarını eski kodla yeniden üretmesin diye önce durdurulur"
           }
         ]
+      },
+      "icSaglik": {
+        "url": "http://127.0.0.1:4100/api/health/detailed"
       }
     },
     {

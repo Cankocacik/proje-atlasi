@@ -6,6 +6,7 @@ import { lookup } from "node:dns/promises";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { icSaglikOku } from "./icSaglik.js";
 import { manifestDogrula } from "./manifest.js";
 import { pm2Listesi } from "./pm2.js";
 
@@ -162,6 +163,25 @@ export async function doktor({ ayar, manifest, kok, fetchFn = fetch, pm2Fn = pm2
       const s = githubDurumu(r.status);
       const kalan = r.headers?.get?.("x-ratelimit-remaining");
       return { ...s, mesaj: kalan ? `${s.mesaj} · kalan istek ${kalan}` : s.mesaj };
+    }));
+  }
+
+  for (const p of projeler.filter((x) => x.icSaglik?.url)) {
+    kontroller.push(zamanli(`İç sağlık · ${p.ad}`, async () => {
+      if (!sunucu) return { durum: "atla", mesaj: "yalnız sunucuda okunur" };
+      const tokenEnv = p.icSaglik.tokenEnv;
+      const s = await icSaglikOku(p.icSaglik, { fetchFn });
+      if (s.erisim === "ag") return { durum: "hata", mesaj: `${p.icSaglik.url} ulaşılamıyor (${s.hata})`, cozum: `${(p.pm2 ?? [])[0] ?? "uygulama"} çalışıyor mu? pm2 status` };
+      if (s.erisim === "yetki") {
+        return tokenEnv && !s.tokenVar
+          ? { durum: "uyari", mesaj: `token yok (.env ${tokenEnv})`, cozum: `Uygulamanın .env'inde HEALTH_DETAILED_TOKEN yoksa önce oraya ekle (en az 16 karakter; npm run sir ile üretilebilir) ve o uygulamayı yeniden başlat; aynı değeri Atlas .env'ine ${tokenEnv}= olarak yaz → pm2 restart proje-atlasi` }
+          : { durum: "hata", mesaj: "token reddedildi", cozum: `${tokenEnv ?? "token"} uygulamadaki HEALTH_DETAILED_TOKEN ile aynı mı?` };
+      }
+      if (s.erisim !== "ok") return { durum: "uyari", mesaj: s.hata ?? "okunamadı" };
+      const bozuk = s.kontroller.filter((k) => !k.ok).map((k) => k.ad);
+      return bozuk.length
+        ? { durum: "hata", mesaj: `${s.durum} — sorunlu: ${bozuk.join(", ")}` }
+        : { durum: "ok", mesaj: `${s.durum} · ${s.kontroller.length} kontrol${s.migration ? ` · defterde ${s.migration.bekleyen} bekleyen migration` : ""}` };
     }));
   }
 

@@ -12,7 +12,7 @@ export interface Commit {
 
 export interface Uyari {
   metin: string;
-  kaynak: "elle" | "git" | "saglik" | "pm2" | "denetim";
+  kaynak: "elle" | "git" | "saglik" | "pm2" | "denetim" | "icsaglik";
   seviye: "orta" | "yuksek";
   /** Elle uyarının eklendiği gün (YYYY-AA-GG). */
   tarih?: string;
@@ -46,6 +46,7 @@ export interface Proje {
   surecler?: string[];
   atlasKendisi?: boolean;
   saglikGecmisi?: SaglikGecmisi | null;
+  icDurum?: IcDurum | null;
   git: {
     var: boolean;
     kaynak?: "git" | "github";
@@ -170,4 +171,15 @@ export interface Bekleyen {
   commitler: Commit[];
   dosyaSayisi: number;
   adimlar: YayinAdimi[];
+}
+
+/** Uygulamanın kendi ayrıntılı sağlık ucundan (DB, ERP, Redis, migration defteri). Yalnız sunucuda. */
+export interface IcDurum {
+  erisim: "ok" | "yetki" | "hata" | "ag";
+  durum: string | null;
+  kontroller: { anahtar: string; ad: string; ok: boolean; ms: number | null; not: string | null }[];
+  migration: { ok: boolean; bekleyen: number; dosyalar: string[]; bilinmeyen: number; hata: string | null } | null;
+  hata?: string;
+  kod?: number | null;
+  ms?: number | null;
 }

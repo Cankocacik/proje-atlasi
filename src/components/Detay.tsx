@@ -5,6 +5,7 @@ import { ASAMA_ETIKET } from "../lib/etiket";
 import { projeIlerlemesi, projeKapsami } from "../lib/ilerleme";
 import { kutuAraligi } from "../lib/olay";
 import { Bekleyen } from "./Bekleyen";
+import { IcSaglik } from "./IcSaglik";
 import { ProjeIkon, Svg } from "./Ikon";
 
 interface Props {
@@ -16,7 +17,7 @@ interface Props {
   repoAc?: (id: string) => void;
 }
 
-const KAYNAK_AD = { elle: "not", git: "git", saglik: "site", pm2: "pm2", denetim: "kurulum" } as const;
+const KAYNAK_AD = { elle: "not", git: "git", saglik: "site", pm2: "pm2", denetim: "kurulum", icsaglik: "iç" } as const;
 const KUTU_AD = { ok: "erişilebilir", kismi: "kısmi kesinti", hata: "kesinti" } as const;
 
 export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
@@ -77,7 +78,8 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
 
       <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", borderTop: "1px solid var(--cizgi)", borderBottom: "1px solid var(--cizgi)" }}>
         {[
-          ["Sürüm", p.surum ?? son?.kisa ?? "—"],
+          // Sunucuda akış GitHub'dan okunur: elle sürüm yoksa bu "canlıdaki" değil "GitHub'daki son"dur.
+          [p.surum ? "Sürüm" : veri.ortam === "sunucu" && p.git?.canlida ? "GitHub'daki son" : "Sürüm", p.surum ?? son?.kisa ?? "—"],
           veri.ortam === "sunucu" && p.git?.canlida
             ? ["Canlıdaki commit", `${p.git.canlida}${p.git.geride ? ` (${p.git.geride} geride)` : ""}`]
             : ["Dal", p.git?.dal ? `${p.git.dal}${p.git.kaynak === "github" ? " · GitHub" : ""}` : "—"],
@@ -110,6 +112,8 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
           <div className="erisim-alt mono"><span>24 sa önce</span><span>şimdi</span></div>
         </div>
       )}
+
+      {p.icDurum && <IcSaglik d={p.icDurum} />}
 
       {p.git?.bekleyen && <Bekleyen bekleyen={p.git.bekleyen} ortam={veri.ortam} simdi={simdi} />}
 
