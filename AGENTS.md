@@ -24,7 +24,7 @@ edilmiştir, hiçbir yerden import edilmez; kullanıcı açıkça istemeden devr
 | Test (vitest) | `npm test` — her değişiklikte |
 | Tip denetimi | `npm run typecheck` |
 | Derleme | `npm run build` (dist/.atlas-surum'a commit yazar) |
-| Kurulum denetimi | `npm run doktor -- --yerel` (PC) · `npm run doktor` (sunucu ayarlarıyla) |
+| Kurulum denetimi | `node scripts/doktor.js --yerel` (PC) · `npm run doktor` (sunucu ayarlarıyla) |
 | Sunucu kurulum / güncelleme | `scripts\kurulum.ps1` · `scripts\guncelle.ps1` — `docs/SUNUCU_KURULUM.md` |
 
 CI (`.github/workflows/ci.yml`, windows-latest): test + derleme + PowerShell 5.1 sözdizimi +

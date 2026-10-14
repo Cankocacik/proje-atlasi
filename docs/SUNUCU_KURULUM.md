@@ -119,7 +119,7 @@ proje detayında **CANLIYA BEKLEYEN** kutusu çıkar: hangi commitler, kaç dosy
 3. `backend/migrations/` değiştiyse `npm run migrate:verify` — **karar noktası** (`dur: true`);
    **doğrudan `npm run migrate` değil**:
    canlıdaki `_migrations` defteri bayat olabilir (elle uygulanmış dosyalar "bekliyor" görünür).
-   ELLE çıkanlar `npm run migrate:verify -- --isaretle` ile deftere yazılır, ancak sonra
+   ELLE çıkanlar `node scripts/migrate-verify.js --isaretle` ile deftere yazılır, ancak sonra
    yalnız BEKLİYOR kalanlar için `npm run migrate`.
 4. `backend/` değiştiyse `pm2 restart siparis-backend --update-env`
 5. Yalnız `frontend/` değiştiyse: "Vercel'de, sunucuda iş yok"

@@ -19,7 +19,7 @@ npm start         # http://127.0.0.1:4321
 Geliştirirken: `npm run dev` (aynı adres, anında yenilenir). Test: `npm test`.
 Masaüstünden tek tıkla açmak için `baslat.cmd`.
 
-Kurulum denetimi: `npm run doktor` (sunucu ayarlarıyla) · `npm run doktor -- --yerel` (PC).
+Kurulum denetimi: `npm run doktor` (sunucu ayarlarıyla) · `node scripts/doktor.js --yerel` (PC).
 Sunucuda kurulum/güncelleme: `scripts\kurulum.ps1` · `scripts\guncelle.ps1`.
 
 ## Veri nereden gelir
