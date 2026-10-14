@@ -60,11 +60,16 @@ if ($yeni -eq $onceki -and -not $Zorla) {
 }
 git --no-pager log --oneline "$onceki..$yeni"
 
-$kilitDegisti = $false
 $script:distDegisti = $false
+# node_modules'ün hangi kilit dosyasıyla kurulduğu işarette durur (kurulum.ps1 ile aynı). Yalnız git farkına
+# bakılsaydı elle `git pull` yapılmış kopyada yeni paketler kurulmadan derlenirdi. -Zorla her durumda kurar.
+$isaretYolu = Join-Path $Kok 'node_modules\.atlas-kilit'
+$kilitOzeti = (Get-FileHash package-lock.json -Algorithm SHA256).Hash
+$isaretOzeti = if (Test-Path $isaretYolu) { (Get-Content $isaretYolu -Raw).Trim() } else { '' }
+$kilitDegisti = [bool]$Zorla -or ($isaretOzeti -ne $kilitOzeti)
 if ($yeni -ne $onceki) {
   git diff --quiet $onceki $yeni -- package-lock.json
-  $kilitDegisti = ($LASTEXITCODE -ne 0)
+  if ($LASTEXITCODE -ne 0) { $kilitDegisti = $true }
 }
 
 function GeriAl($neden) {
@@ -75,7 +80,9 @@ function GeriAl($neden) {
   if ($kilitDegisti) {
     pm2 stop proje-atlasi *> $null
     npm ci --no-fund --no-audit | Out-Null
-    if ($LASTEXITCODE -ne 0) { $eksik += 'npm ci' }
+    # İşaret, geri kurulan kilitle eşlenir; kurulamadıysa silinir (sonraki çalıştırma yeniden kurar).
+    if ($LASTEXITCODE -ne 0) { $eksik += 'npm ci'; Remove-Item $isaretYolu -Force -ErrorAction SilentlyContinue }
+    else { [IO.File]::WriteAllText($isaretYolu, (Get-FileHash package-lock.json -Algorithm SHA256).Hash) }
   }
   # Arayüz yalnız BU çalıştırmada değiştirildiyse geri alınır; yoksa dist-eski daha eski bir sürümdür.
   if ($script:distDegisti -and (Test-Path dist-eski)) {
@@ -101,13 +108,18 @@ if ($kilitDegisti -or -not (Test-Path node_modules)) {
   pm2 stop proje-atlasi *> $null
   npm ci --no-fund --no-audit
   if ($LASTEXITCODE -ne 0) { GeriAl 'npm ci başarısız' }
-  [IO.File]::WriteAllText((Join-Path $Kok 'node_modules\.atlas-kilit'), (Get-FileHash package-lock.json -Algorithm SHA256).Hash)
+  [IO.File]::WriteAllText($isaretYolu, $kilitOzeti)
   Tamam 'npm ci tamam'
 }
 
 Baslik 'Arayüz'
 if (Test-Path dist-yeni) { Remove-Item dist-yeni -Recurse -Force }
-npm run build -- --outDir dist-yeni --emptyOutDir
+# `npm run build -- --outDir …` KULLANILMAZ: bazı npm sürümlerinin npm.ps1'i PowerShell'de `--`'yi yutar,
+# --outDir npm ayarı sanılır ve vite "dist-yeni"yi kök klasör alır (10-14 sunucuda böyle bozuldu).
+# Araçlar doğrudan node ile çağrılır; npm sürümünden bağımsız.
+node node_modules/typescript/bin/tsc --noEmit
+if ($LASTEXITCODE -ne 0) { GeriAl 'tip denetimi başarısız' }
+node node_modules/vite/bin/vite.js build --outDir dist-yeni --emptyOutDir
 if ($LASTEXITCODE -ne 0) { if (Test-Path dist-yeni) { Remove-Item dist-yeni -Recurse -Force }; GeriAl 'derleme başarısız' }
 # Klasör değişimi denetlenir: Windows'ta açık bir tutamaç (Defender, Gezgin) Rename'i düşürebilir;
 # 'Continue' altında bu sessiz geçer ve Atlas dist'siz açılırdı (her sayfa 500).
