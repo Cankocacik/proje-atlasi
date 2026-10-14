@@ -2,6 +2,9 @@
 // DB/ağ/dosya erişimi yok — birim testle korunur (test/turet.test.js).
 
 export const YAVAS_MS = 3000;
+
+// Commit tarihleri zaman olarak sıralanır: git %cI committer'ın dilimini yazar, metin sırası yanıltır.
+const yenidenEskiye = (a, b) => Date.parse(b.tarih) - Date.parse(a.tarih);
 export const HATA_ESIGI = 10;
 
 /**
@@ -11,7 +14,11 @@ export const HATA_ESIGI = 10;
  */
 export function uyarilariUret(proje, git, saglik, ek = {}) {
   const sunucu = ek.ortam === "sunucu";
-  const liste = (proje.uyarilar ?? []).map((metin) => ({ metin, kaynak: "elle", seviye: "orta" }));
+  // Elle uyarı düz metin ya da { metin, tarih, seviye } olabilir; tarih notun ne zamandır durduğunu gösterir.
+  const liste = (proje.uyarilar ?? [])
+    .map((u) => (typeof u === "string" ? { metin: u } : u ?? {}))
+    .filter((u) => u.metin)
+    .map((u) => ({ metin: u.metin, kaynak: "elle", seviye: u.seviye === "yuksek" ? "yuksek" : "orta", ...(u.tarih ? { tarih: u.tarih } : {}) }));
   if (git && !git.var) {
     if (git.kaynak === "github") liste.push({ metin: `GitHub okunamadı (${git.hata})`, kaynak: "git", seviye: "orta" });
     else liste.push({ metin: `Repo okunamadı: ${proje.repo}`, kaynak: "git", seviye: "yuksek" });
@@ -67,12 +74,50 @@ export function akisiBirlestir(projeler, sinir = 40) {
     }
   }
   return [...secilen.values()]
-    .sort((a, b) => (a.tarih < b.tarih ? 1 : a.tarih > b.tarih ? -1 : 0))
+    .sort(yenidenEskiye)
     .slice(0, sinir)
     .map(({ oncelik: _o, ...c }) => c);
 }
 
-const GUN_ADLARI = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+/**
+ * Yayın adımları: bekleyen dosyalar manifestteki kurallarla eşlenir (kural sırası = uygulama sırası).
+ * kural: { yol: "backend/migrations/", adim: "cd backend; npm run migrate:verify", not?, bilgi?, dur? }
+ *   dur: karar noktası — çıktısı okunmadan sonraki adıma geçilmez ("tümünü kopyala" burada keser).
+ *   yol "" → her değişiklikte (ör. git pull); "/" ile biten → klasör öneki; diğerleri → tam dosya ya da o klasör.
+ * Eşleşmeyen kural listeye girmez.
+ */
+export function yayinAdimlari(dosyalar, kurallar = []) {
+  const adimlar = [];
+  for (const k of kurallar) {
+    if (typeof k?.adim !== "string") continue;
+    const yol = k.yol ?? "";
+    const eslesir = (d) => (yol.endsWith("/") ? d.startsWith(yol) : d === yol || d.startsWith(`${yol}/`));
+    const eslesen = yol === "" ? dosyalar : dosyalar.filter(eslesir);
+    if (!eslesen.length) continue;
+    // Aynı komut iki kuraldan gelirse bir kez yazılır (dosya sayıları birleşir).
+    const onceki = adimlar.find((a) => a.adim === k.adim);
+    if (onceki) {
+      onceki.dosya += eslesen.length;
+      continue;
+    }
+    adimlar.push({ adim: k.adim, ...(k.not ? { not: k.not } : {}), ...(k.bilgi ? { bilgi: true } : {}), ...(k.dur ? { dur: true } : {}), dosya: eslesen.length, ornek: eslesen.slice(0, 3) });
+  }
+  return adimlar;
+}
+
+/**
+ * Ekrana giden akış: genel son `genel` commit + her projenin kendi son `projeBasi` commit'i.
+ * Yalnız genel sınır olsaydı az commit alan modülün detayı "commit yok" derdi.
+ */
+export function akisSec(tumAkis, projeIdleri, { genel = 40, projeBasi = 4 } = {}) {
+  const secilen = new Map(tumAkis.slice(0, genel).map((c) => [c.hash, c]));
+  for (const id of projeIdleri) {
+    for (const c of tumAkis.filter((x) => x.projeId === id).slice(0, projeBasi)) secilen.set(c.hash, c);
+  }
+  return [...secilen.values()].sort(yenidenEskiye);
+}
+
+const GUN_ADLARI =["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
 
 function yerelGunAnahtari(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

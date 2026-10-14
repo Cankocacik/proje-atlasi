@@ -34,7 +34,10 @@
       "url": "https://rosbelportal.com",
       "aciklama": "Sipariş onayından finansa tüm üretim akışı tek portalda.",
       "uyarilar": [
-        "Numune Talep ve Bulk onay migration'ları sunucuda bekliyor"
+        {
+          "metin": "Numune Talep ve Bulk onay migration'ları sunucuda bekliyor",
+          "tarih": "2026-10-06"
+        }
       ],
       "adimlar": [
         {
@@ -45,7 +48,44 @@
       ],
       "pm2": [
         "siparis-backend"
-      ]
+      ],
+      "yayin": {
+        "adimlar": [
+          {
+            "yol": "",
+            "adim": "cd C:/SiparisOnayProjesi; git pull --ff-only"
+          },
+          {
+            "yol": "backend/package-lock.json",
+            "adim": "cd C:/SiparisOnayProjesi/backend; npm install",
+            "not": "npm ci değil: çalışan pm2 süreci node_modules'ü kilitler"
+          },
+          {
+            "yol": "backend/package.json",
+            "adim": "cd C:/SiparisOnayProjesi/backend; npm install",
+            "not": "npm ci değil: çalışan pm2 süreci node_modules'ü kilitler"
+          },
+          {
+            "yol": "backend/migrations/",
+            "adim": "cd C:/SiparisOnayProjesi/backend; npm run migrate:verify",
+            "not": "Karar noktası. Defter (_migrations) bayat olabilir: ELLE çıkanları `npm run migrate:verify -- --isaretle` ile deftere yaz, ancak sonra yalnız BEKLİYOR kalanlar için `npm run migrate`. Doğrudan migrate, elle uygulanmışı ikinci kez çalıştırır.",
+            "dur": true
+          },
+          {
+            "yol": "backend/",
+            "adim": "pm2 restart siparis-backend --update-env"
+          },
+          {
+            "yol": "frontend/",
+            "adim": "Frontend Vercel'de: main'e push yeterli, sunucuda iş yok",
+            "bilgi": true
+          }
+        ]
+      },
+      "icSaglik": {
+        "url": "http://127.0.0.1:4000/api/health/detailed",
+        "tokenEnv": "ROSBEL_HEALTH_TOKEN"
+      }
     },
     {
       "id": "mutabiko",
@@ -65,7 +105,10 @@
       "url": "https://mutabiko.com",
       "aciklama": "Cari mutabakat modülünden doğan bağımsız ürün.",
       "uyarilar": [
-        "Ekstre karşılaştırma aracı (7e46dd5) canlıya alınmayı bekliyor"
+        {
+          "metin": "Ekstre karşılaştırma aracı (7e46dd5) canlıya alınmayı bekliyor",
+          "tarih": "2026-10-13"
+        }
       ],
       "adimlar": [
         {
@@ -83,7 +126,43 @@
         "mutabiko-api",
         "mutabiko-web",
         "mutabiko-tunnel"
-      ]
+      ],
+      "yayin": {
+        "adimlar": [
+          {
+            "yol": "",
+            "adim": "cd C:/mutabik; git pull --ff-only"
+          },
+          {
+            "yol": "api/package-lock.json",
+            "adim": "pm2 stop mutabiko-api; cd C:/mutabik/api; npm ci",
+            "not": "çalışan süreç varken npm ci yarım kalır; API aşağıdaki yeniden başlatma adımında açılır (yeni kod migration'dan önce çalışmasın)"
+          },
+          {
+            "yol": "web/package-lock.json",
+            "adim": "pm2 stop mutabiko-web; cd C:/mutabik/web; npm ci"
+          },
+          {
+            "yol": "api/migrations/",
+            "adim": "cd C:/mutabik/api; npm run migrate:verify",
+            "not": "Karar noktası. Defter (_migrations) bayat olabilir: ELLE çıkanları `npm run migrate:verify -- --isaretle` ile deftere yaz, ancak sonra yalnız BEKLİYOR kalanlar için `npm run migrate`. Doğrudan migrate, elle uygulanmışı ikinci kez çalıştırır.",
+            "dur": true
+          },
+          {
+            "yol": "api/",
+            "adim": "pm2 restart mutabiko-api --update-env",
+            "not": "durdurulmuş süreci de başlatır"
+          },
+          {
+            "yol": "web/",
+            "adim": "pm2 stop mutabiko-web; cd C:/mutabik/web; npm run build; if ($?) { pm2 start mutabiko-web }",
+            "not": "build sırasında eski süreç ISR sayfalarını eski kodla yeniden üretmesin diye önce durdurulur; derleme bozulursa yarım .next ile açılmaz"
+          }
+        ]
+      },
+      "icSaglik": {
+        "url": "http://127.0.0.1:4100/api/health/detailed"
+      }
     },
     {
       "id": "tasarim",
@@ -139,7 +218,10 @@
       "surum": "canlı 2.2.0",
       "aciklama": "Gümrük aracı ve finans rapor paketi.",
       "uyarilar": [
-        "2.2.2 inceleme paketi hazır, canlıda 2.2.0"
+        {
+          "metin": "2.2.2 inceleme paketi hazır, canlıda 2.2.0",
+          "tarih": "2026-10-09"
+        }
       ],
       "adimlar": [
         {
@@ -166,7 +248,10 @@
       "surum": "laravel · 688da50",
       "aciklama": "Servis/garanti sistemi; Laravel sürümü 11.10'da canlıya alındı.",
       "uyarilar": [
-        "G5 doğrulaması bekliyor"
+        {
+          "metin": "G5 doğrulaması bekliyor",
+          "tarih": "2026-10-11"
+        }
       ],
       "adimlar": [
         {
@@ -274,7 +359,10 @@
       ],
       "aciklama": "İki dilli numune talep akışı, A4 fiş ve QR.",
       "uyarilar": [
-        "Migration'lar sunucuda bekliyor"
+        {
+          "metin": "Migration'lar sunucuda bekliyor",
+          "tarih": "2026-10-06"
+        }
       ],
       "adimlar": [
         {
@@ -323,7 +411,10 @@
       ],
       "aciklama": "Reklamasyon tahsisini ERP'ye doğrudan yazan bot, 5 denetimle.",
       "uyarilar": [
-        "Sunucu kurulumu sürüyor"
+        {
+          "metin": "Sunucu kurulumu sürüyor",
+          "tarih": "2026-10-08"
+        }
       ],
       "adimlar": [
         {
@@ -344,6 +435,35 @@
         "y": 172
       },
       "aciklama": "Moodboard'dan stil DNA'sı çıkarıp baskıya hazır SVG üretir."
+    },
+    {
+      "id": "atlas",
+      "ad": "Proje Atlası",
+      "tur": "Bu ekran",
+      "ikon": "module",
+      "asama": "canli",
+      "atlasKendisi": true,
+      "konum": {
+        "x": 390,
+        "y": 34
+      },
+      "repo": "C:/proje-atlasi",
+      "github": "Cankocacik/proje-atlasi",
+      "pm2": [
+        "proje-atlasi"
+      ],
+      "saglik": "https://atlas.rosbelportal.com/api/oturum",
+      "url": "https://atlas.rosbelportal.com",
+      "aciklama": "Bu ekran. Sunucuda pm2 + Cloudflare Tunnel ile çalışır; kurulum denetiminin sorunları burada uyarı olarak görünür.",
+      "yayin": {
+        "adimlar": [
+          {
+            "yol": "",
+            "adim": "powershell -ExecutionPolicy Bypass -File C:/proje-atlasi/scripts/guncelle.ps1",
+            "not": "derleme, yeniden başlatma ve geri dönüş betikte"
+          }
+        ]
+      }
     }
   ],
   "akislar": [

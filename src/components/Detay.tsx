@@ -1,8 +1,12 @@
 import type { Anlik, Proje } from "../types";
 import { durumEtiketi } from "../lib/etiket";
-import { goreli, tarihSaat } from "../lib/zaman";
+import { gunFarki, goreli, tarihSaat } from "../lib/zaman";
 import { ASAMA_ETIKET } from "../lib/etiket";
 import { projeIlerlemesi, projeKapsami } from "../lib/ilerleme";
+import { kutuAraligi } from "../lib/olay";
+import { egriYolu } from "../lib/egri";
+import { Bekleyen } from "./Bekleyen";
+import { IcSaglik } from "./IcSaglik";
 import { ProjeIkon, Svg } from "./Ikon";
 
 interface Props {
@@ -14,7 +18,34 @@ interface Props {
   repoAc?: (id: string) => void;
 }
 
-const KAYNAK_AD = { elle: "not", git: "git", saglik: "site", pm2: "pm2" } as const;
+const KAYNAK_AD = { elle: "not", git: "git", saglik: "site", pm2: "pm2", denetim: "kurulum", icsaglik: "iç" } as const;
+const KUTU_AD = { ok: "erişilebilir", kismi: "kısmi kesinti", hata: "kesinti" } as const;
+
+const EG = 280;
+const EY = 46;
+
+/** Son 24 saatin yanıt süresi (30 dk kutu ortalaması). Veri olmayan aralık boş kalır. */
+function YanitEgrisi({ sureler }: { sureler: (number | null)[] }) {
+  const e = egriYolu(sureler, EG, EY);
+  if (!e.cizgi) return null;
+  return (
+    <div className="egri" role="img" aria-label={`Son 24 saatte yanıt süresi en az ${e.enAz} ms, en çok ${e.enCok} ms`}>
+      <svg viewBox={`0 0 ${EG} ${EY}`} preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="egri-dolgu" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="var(--dev)" stopOpacity=".32" />
+            <stop offset="1" stopColor="var(--dev)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={e.alan} fill="url(#egri-dolgu)" />
+        <path d={e.cizgi} fill="none" stroke="var(--dev)" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+      {e.son && <span className="egri-uc" style={{ left: `${(e.son.x / EG) * 100}%`, top: `${(e.son.y / EY) * 100}%` }} />}
+      <span className="egri-etiket mono">{e.enCok} ms</span>
+      <span className="egri-etiket egri-alt mono">{e.enAz} ms</span>
+    </div>
+  );
+}
 
 export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
   const byId = new Map(veri.projeler.map((x) => [x.id, x]));
@@ -65,8 +96,10 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
         <div className="asamalar" style={{ gap: 5 }}>
           {[1, 2, 3, 4].map((i) => <span key={i} className={`asama${p.asamaSira >= i ? " on" : ""}`} style={{ height: 8 }} />)}
         </div>
-        <div className="mono" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 5, fontSize: 10, color: "var(--cok-sessiz)" }}>
-          <span>FİKİR</span><span>GELİŞTİRME</span><span>BEKLİYOR</span><span>CANLI</span>
+        <div className="mono asama-etiketleri">
+          {["FİKİR", "GELİŞTİRME", "BEKLİYOR", "CANLI"].map((ad, i) => (
+            <span key={ad} title={ad} className={Math.min(p.asamaSira, 4) === i + 1 ? "simdiki" : undefined}>{ad}</span>
+          ))}
         </div>
       </div>
 
@@ -74,7 +107,8 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
 
       <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", borderTop: "1px solid var(--cizgi)", borderBottom: "1px solid var(--cizgi)" }}>
         {[
-          ["Sürüm", p.surum ?? son?.kisa ?? "—"],
+          // Sunucuda akış GitHub'dan okunur: elle sürüm yoksa bu "canlıdaki" değil "GitHub'daki son"dur.
+          [p.surum ? "Sürüm" : veri.ortam === "sunucu" && p.git?.canlida ? "GitHub'daki son" : "Sürüm", p.surum ?? son?.kisa ?? "—"],
           veri.ortam === "sunucu" && p.git?.canlida
             ? ["Canlıdaki commit", `${p.git.canlida}${p.git.geride ? ` (${p.git.geride} geride)` : ""}`]
             : ["Dal", p.git?.dal ? `${p.git.dal}${p.git.kaynak === "github" ? " · GitHub" : ""}` : "—"],
@@ -90,6 +124,29 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
         ))}
       </dl>
 
+      {p.saglikGecmisi && p.saglikGecmisi.ornek > 0 && (
+        <div className="erisim">
+          <div className="erisim-baslik">
+            <span className="etiketcik">ERİŞİM VE YANIT · 24 SA</span>
+            <span className="mono erisim-deger" title={p.saglikGecmisi.ortalamaMs != null ? `Ortalama yanıt ${p.saglikGecmisi.ortalamaMs} ms · ${p.saglikGecmisi.ornek} yoklama` : undefined}>
+              %{p.saglikGecmisi.yuzde}
+              {p.saglikGecmisi.ortalamaMs != null && <span className="sessiz"> · {p.saglikGecmisi.ortalamaMs} ms</span>}
+            </span>
+          </div>
+          {p.saglikGecmisi.sureler && <YanitEgrisi sureler={p.saglikGecmisi.sureler} />}
+          <div className="erisim-serit" role="img" aria-label={`Son 24 saatte erişilebilirlik yüzde ${p.saglikGecmisi.yuzde}, ${p.saglikGecmisi.ornek} yoklama`}>
+            {p.saglikGecmisi.kutular.map((k, i, arr) => (
+              <span key={i} className={`erisim-kutu ${k ?? "bos"}`} title={`${kutuAraligi(i, arr.length, simdi)} · ${k ? KUTU_AD[k] : "veri yok"}`} />
+            ))}
+          </div>
+          <div className="erisim-alt mono"><span>24 sa önce</span><span>şimdi</span></div>
+        </div>
+      )}
+
+      {p.icDurum && <IcSaglik d={p.icDurum} />}
+
+      {p.git?.bekleyen && <Bekleyen bekleyen={p.git.bekleyen} ortam={veri.ortam} simdi={simdi} />}
+
       {p.uyarilar.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <span className="etiketcik">DİKKAT</span>
@@ -97,7 +154,9 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
             <div key={u.metin} className={`uyari-kutu${u.seviye === "orta" ? " orta" : ""}`}>
               <span style={{ flex: "none", marginTop: 1 }}><Svg ad="uyari" boyut={16} /></span>
               <span style={{ flex: 1 }}>{u.metin}</span>
-              <span className="mono" style={{ fontSize: 10, opacity: 0.75 }}>{KAYNAK_AD[u.kaynak]}</span>
+              <span className="mono" style={{ fontSize: 10, opacity: 0.75, whiteSpace: "nowrap" }} title={u.tarih ? `${u.tarih} tarihinde eklendi` : undefined}>
+                {KAYNAK_AD[u.kaynak]}{u.tarih ? ` · ${gunFarki(u.tarih, simdi)} g` : ""}
+              </span>
             </div>
           ))}
         </div>

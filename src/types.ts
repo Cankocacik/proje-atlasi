@@ -12,8 +12,16 @@ export interface Commit {
 
 export interface Uyari {
   metin: string;
-  kaynak: "elle" | "git" | "saglik" | "pm2";
+  kaynak: "elle" | "git" | "saglik" | "pm2" | "denetim" | "icsaglik";
   seviye: "orta" | "yuksek";
+  /** Elle uyarının eklendiği gün (YYYY-AA-GG). */
+  tarih?: string;
+}
+
+export interface ManifestSorunu {
+  seviye: "hata" | "uyari";
+  yer: string;
+  mesaj: string;
 }
 
 export interface Proje {
@@ -36,6 +44,9 @@ export interface Proje {
   github?: string;
   pm2?: string[];
   surecler?: string[];
+  atlasKendisi?: boolean;
+  saglikGecmisi?: SaglikGecmisi | null;
+  icDurum?: IcDurum | null;
   git: {
     var: boolean;
     kaynak?: "git" | "github";
@@ -46,6 +57,7 @@ export interface Proje {
     ileride?: number | null;
     geride?: number | null;
     canlida?: string | null;
+    bekleyen?: Bekleyen | null;
   } | null;
   saglik: { ok: boolean; kod: number | null; ms: number | null; hata?: string } | null;
 }
@@ -81,6 +93,8 @@ export interface LogSatiri {
   akim: "out" | "err";
   hata: boolean;
   metin: string;
+  /** Atlas açılmadan önce dosyada olan satır: zamanı bilinmiyor. */
+  gecmis?: boolean;
 }
 
 export type Ortam = "yerel" | "sunucu";
@@ -88,6 +102,8 @@ export type Ortam = "yerel" | "sunucu";
 export interface Anlik {
   zaman: string;
   ortam: Ortam;
+  /** Otomatik tarama aralığı (sn). */
+  yenilemeSaniye?: number;
   surecler: Surec[] | null;
   gorunum: { vurgu?: string; radar?: boolean };
   harita: { genislik: number; yukseklik: number };
@@ -97,4 +113,82 @@ export interface Anlik {
   hafta: { tarih: string; gun: string; sayi: number; bugun: boolean }[];
   adimlar: Adim[];
   manifestHatasi?: string | null;
+  manifestSorunlari?: ManifestSorunu[];
+  atlas?: AtlasBilgi | null;
+  denetim?: Denetim | null;
+  olaylar?: Olay[];
+  bildirimKanali?: { telegram: boolean };
+}
+
+/** Son 24 saatin 30'ar dakikalık kutuları: ok · kismi (bazısı düştü) · hata · null (veri yok). */
+export interface SaglikGecmisi {
+  yuzde: number | null;
+  ortalamaMs: number | null;
+  ornek: number;
+  kutular: ("ok" | "kismi" | "hata" | null)[];
+  /** Kutu başına başarılı yoklamaların ortalama yanıt süresi (ms). Eski sunucu sürümünde yok. */
+  sureler?: (number | null)[];
+}
+
+export interface Olay {
+  id: number;
+  zaman: string;
+  seviye: "hata" | "uyari" | "iyi" | "bilgi";
+  tur: string;
+  projeId?: string;
+  metin: string;
+}
+
+export interface DenetimSonucu {
+  ad: string;
+  durum: "ok" | "uyari" | "hata" | "atla";
+  mesaj: string;
+  cozum?: string;
+}
+
+export interface Denetim {
+  zaman: string;
+  sonuclar: DenetimSonucu[];
+  ozet: { ok: number; uyari: number; hata: number; atla: number };
+}
+
+export interface AtlasBilgi {
+  commit: string | null;
+  tarih: string | null;
+  mesaj: string | null;
+  derleme: string | null;
+  derlemeEski: boolean;
+  node: string;
+  baslangic: string;
+}
+
+export interface YayinAdimi {
+  adim: string;
+  not?: string;
+  /** Komut değil bilgi satırı (kopyalanmaz). */
+  bilgi?: boolean;
+  /** Karar noktası: çıktısı okunmadan sonraki adıma geçilmez (toplu kopya burada biter). */
+  dur?: boolean;
+  dosya: number;
+  ornek: string[];
+}
+
+/** Uzakta olup bu kopyada olmayan iş: sunucuda "canlıya bekleyen", PC'de "çekilmemiş". */
+export interface Bekleyen {
+  /** Gerçek bekleyen commit sayısı (liste en çok 20 commit taşır). */
+  toplam?: number;
+  commitler: Commit[];
+  dosyaSayisi: number;
+  adimlar: YayinAdimi[];
+}
+
+/** Uygulamanın kendi ayrıntılı sağlık ucundan (DB, ERP, Redis, migration defteri). Yalnız sunucuda. */
+export interface IcDurum {
+  erisim: "ok" | "yetki" | "hata" | "ag";
+  durum: string | null;
+  kontroller: { anahtar: string; ad: string; ok: boolean; ms: number | null; not: string | null }[];
+  migration: { ok: boolean; bekleyen: number; dosyalar: string[]; bilinmeyen: number; hata: string | null } | null;
+  hata?: string;
+  kod?: number | null;
+  ms?: number | null;
 }

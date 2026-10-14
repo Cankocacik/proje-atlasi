@@ -4,8 +4,10 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchGerekirse, gitOzeti } from "./git.js";
 import { githubOzeti } from "./github.js";
+import { icSaglikOku, icSaglikUyarilari } from "./icSaglik.js";
+import { manifestDogrula } from "./manifest.js";
 import { saglikKontrol } from "./saglik.js";
-import { akisiBirlestir, ASAMA_SIRA, durumBul, haftalikOzet, uyarilariUret } from "./turet.js";
+import { akisiBirlestir, akisSec, ASAMA_SIRA, durumBul, haftalikOzet, uyarilariUret, yayinAdimlari } from "./turet.js";
 
 const KOK = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const MANIFEST_YOLU = resolve(KOK, "projeler.json");
@@ -46,7 +48,9 @@ async function onbellekli(anahtar, tazelikMs, zorla, uret) {
  * Manifest + git/GitHub + sağlık + pm2 + işaretli adımlar → ekranın tek anlık görüntüsü.
  * surecler: pm2 yoksa null; varsa [{ ad, durum, ..., sonSaatYenidenBaslama, hata15 }]
  */
-export async function topla({ zorla = false, ayar, surecler = null }) {
+export async function topla({ zorla = false, ayar, surecler = null, saglikKaydi = null, denetim = null }) {
+  // saglikKaydi: { ekle(url, sonuc), ozet(url) } — erişilebilirlik geçmişi (isteğe bağlı)
+  // denetim: son kurulum denetimi; hata/uyarıları `atlasKendisi` düğümüne uyarı olarak düşer
   const m = await manifestOku();
   const adimDurumu = await adimDurumuOku();
   const saglikMs = (m.saglikSaniye ?? 60) * 1000;
@@ -66,20 +70,45 @@ export async function topla({ zorla = false, ayar, surecler = null }) {
     return p.repo ? { var: false, kaynak: "git" } : null;
   }
 
+  // Kimliği/konumu bozuk düğüm ekranı çökertmesin: dışarıda kalır, manifestSorunlari'nda listelenir.
+  const gecerli = (m.projeler ?? []).filter((p) => p?.id && p.ad && typeof p.konum?.x === "number" && typeof p.konum?.y === "number");
   const projeler = await Promise.all(
-    m.projeler.map(async (p) => {
+    gecerli.map(async (p) => {
       const [git, saglik] = await Promise.all([
         gitGetir(p),
-        p.saglik ? onbellekli(`saglik:${p.saglik}`, saglikMs, zorla, () => saglikKontrol(p.saglik)) : null,
+        p.saglik
+          ? onbellekli(`saglik:${p.saglik}`, saglikMs, zorla, async () => {
+            const sonuc = await saglikKontrol(p.saglik);
+            await saglikKaydi?.ekle(p.saglik, sonuc);
+            return sonuc;
+          })
+          : null,
       ]);
+      const saglikGecmisi = p.saglik && saglikKaydi ? await saglikKaydi.ozet(p.saglik) : null;
+      // İç sağlık ucu loopback'tedir: yalnız sunucuda anlamlı (PC'de yerel geliştirme sunucusuna gitmesin).
+      const icDurum = p.icSaglik?.url && ayar.ortam === "sunucu"
+        ? await onbellekli(`ic:${p.icSaglik.url}`, saglikMs, zorla, () => icSaglikOku(p.icSaglik))
+        : null;
       const projeSurecleri = surecler
         ? (p.pm2 ?? []).map((ad) => surecler.find((s) => s.ad === ad) ?? { ad, durum: "bulunamadı", sonSaatYenidenBaslama: 0, hata15: 0 })
         : [];
-      const uyarilar = uyarilariUret(p, git, saglik, { ortam: ayar.ortam, surecler: projeSurecleri });
+      const uyarilar = [
+        ...uyarilariUret(p, git, saglik, { ortam: ayar.ortam, surecler: projeSurecleri }),
+        ...icSaglikUyarilari(icDurum, { migrationUyarisi: p.icSaglik?.migrationUyarisi !== false }),
+      ];
+      if (p.atlasKendisi && denetim) {
+        for (const d of denetim.sonuclar) {
+          if (d.durum === "hata" || d.durum === "uyari") {
+            uyarilar.push({ metin: `Kurulum · ${d.ad}: ${d.mesaj}`, kaynak: "denetim", seviye: d.durum === "hata" ? "yuksek" : "orta" });
+          }
+        }
+      }
       return {
         ...p,
         git,
         saglik,
+        saglikGecmisi,
+        icDurum,
         surecler: projeSurecleri.map((s) => s.ad),
         uyarilar,
         durum: durumBul(p.asama, uyarilar),
@@ -99,17 +128,26 @@ export async function topla({ zorla = false, ayar, surecler = null }) {
   return {
     zaman: new Date().toISOString(),
     ortam: ayar.ortam,
+    // Ekrandaki "sonraki tarama" halkası için (baslat() aynı değerle zamanlar).
+    yenilemeSaniye: m.yenilemeSaniye ?? 20,
+    manifestSorunlari: manifestDogrula(m),
     gorunum: m.gorunum ?? {},
     harita: m.harita ?? { genislik: 780, yukseklik: 540 },
     akislar: m.akislar ?? [],
     projeler: projeler.map(({ git, ...p }) => ({
       ...p,
       git: git && git.var
-        ? { var: true, kaynak: git.kaynak, dal: git.dal, son: git.son, degisen: git.degisen, ileride: git.ileride, geride: git.geride, canlida: git.canlida ?? null }
+        ? {
+          var: true, kaynak: git.kaynak, dal: git.dal, son: git.son, degisen: git.degisen, ileride: git.ileride, geride: git.geride, canlida: git.canlida ?? null,
+          // Dosya listesi ekrana gitmez (büyük olabilir); yalnız sayısı ve ondan çıkan adımlar.
+          bekleyen: git.bekleyen
+            ? { toplam: git.bekleyen.toplam ?? git.bekleyen.commitler.length, commitler: git.bekleyen.commitler, dosyaSayisi: git.bekleyen.dosyalar.length, adimlar: yayinAdimlari(git.bekleyen.dosyalar, p.yayin?.adimlar) }
+            : null,
+        }
         : git,
     })),
     surecler: surecler?.map(({ outLog: _o, errLog: _e, ...s }) => s) ?? null,
-    akis: tumAkis.slice(0, 40),
+    akis: akisSec(tumAkis, projeler.map((p) => p.id)),
     hafta: haftalikOzet(tumAkis),
     adimlar,
   };

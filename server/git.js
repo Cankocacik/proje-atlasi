@@ -66,6 +66,22 @@ export async function gitOzeti(repo, { kapsam = [], haric = [], gun = 21, ortam 
   ]);
   if (dal === null) return { var: false, kaynak: "git" };
   const sayi = (s) => (s === null || s === "" ? null : Number(s));
+
+  // Geride kalan varsa: hangi commitler ve hangi dosyalar — yayın adımları bunlardan çıkarılır.
+  let bekleyen = null;
+  if (sayi(geride) > 0) {
+    const [bLog, bDosya] = await Promise.all([
+      git(repo, ["log", "-n", "20", bicim, "HEAD..@{u}", ...spec]),
+      // Üç nokta: ortak atadan @{u}'ya — bu kopyadaki yerel commitler "bekleyen" sayılmaz.
+      git(repo, ["diff", "--name-only", "HEAD...@{u}", ...spec]),
+    ]);
+    bekleyen = {
+      toplam: sayi(geride),
+      commitler: logSatirlariniAyristir(bLog),
+      dosyalar: bDosya ? bDosya.split("\n").filter(Boolean).slice(0, 2000) : [],
+    };
+  }
+
   return {
     var: true,
     kaynak: "git",
@@ -76,5 +92,6 @@ export async function gitOzeti(repo, { kapsam = [], haric = [], gun = 21, ortam 
     ileride: sayi(ileride),
     geride: sayi(geride),
     canlida,
+    bekleyen,
   };
 }

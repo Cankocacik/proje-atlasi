@@ -117,6 +117,30 @@ export function useAtlas() {
 
   const repoAc = useCallback((id: string) => post("/api/ac", { id }).catch(hataYakala), [post, hataYakala]);
 
+  /** Telegram'a deneme mesajı; sonuç metni döner (panel gösterir). */
+  const bildirimDene = useCallback(async (): Promise<string> => {
+    try {
+      await post("/api/bildirim-dene");
+      return "Telegram'a gönderildi";
+    } catch (e) {
+      return (e as Error).message;
+    }
+  }, [post]);
+
+  const [denetleniyor, setDenetleniyor] = useState(false);
+  /** Kurulum denetimini hemen çalıştırır; sonuç bir sonraki anlık görüntüyle de gelir. */
+  const denetle = useCallback(async () => {
+    setDenetleniyor(true);
+    try {
+      const denetim = await post("/api/doktor");
+      setVeri((v) => (v ? { ...v, denetim } : v));
+    } catch (e) {
+      hataYakala(e);
+    } finally {
+      setDenetleniyor(false);
+    }
+  }, [post, hataYakala]);
+
   /** Sürecin log geçmişini çeker; sonrası SSE "log" olaylarıyla eklenir. */
   const logYukle = useCallback(async (surec: string) => {
     const r = await fetch(`/api/log?surec=${encodeURIComponent(surec)}`);
@@ -129,5 +153,6 @@ export function useAtlas() {
     oturum, girisGerekli, girisTuru, giris, cikis,
     veri, bagli, hata, simdi, tara, taraniyor, adimIsaretle, repoAc,
     loglar, logYukle,
+    denetle, denetleniyor, bildirimDene,
   };
 }

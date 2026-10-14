@@ -1,12 +1,24 @@
 import { spawn } from "node:child_process";
 import { watch } from "node:fs";
-import { basename, dirname } from "node:path";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { basename, dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { bildirilir } from "./bildirim.js";
+import { doktor } from "./doktor.js";
+import { saglikGecmisi } from "./gecmis.js";
 import { cerezOku, denemeSiniri, jetonCoz, jetonUret, parolaDogru } from "./kimlik.js";
+import { olayDeposu, olaylariBul } from "./olaylar.js";
 import { ortamOku } from "./ortam.js";
-import { portalGirisi } from "./portalGiris.js";
+import { gunAnahtari, gunlukOzet, ozetZamaniMi, saatCoz } from "./ozet.js";
 import { logIzleyici, pm2Listesi, yenidenBaslamaIzleyici } from "./pm2.js";
+import { portalGirisi } from "./portalGiris.js";
+import { atlasSurumu } from "./surum.js";
+import { kisici, mesajMetni, telegramAyari, telegramGonder } from "./telegram.js";
 import { adimIsaretle, manifestOku, MANIFEST_YOLU, topla } from "./topla.js";
 
+const KOK = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const VERI = join(KOK, "data");
+const DENETIM_ARALIK_MS = 30 * 60_000;
 const CEREZ = "atlas_oturum";
 const YEREL_HOST = /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/;
 const PM2_ARALIK_MS = 10_000;
@@ -64,6 +76,8 @@ export function istekUygun(req, izinliHost) {
  *   POST /api/yenile   önbellekleri atlayıp hemen topla
  *   POST /api/adim     { id, tamam }
  *   POST /api/ac       { id } repo klasörünü VS Code'da aç (yalnız yerel ortam + yerel istek)
+ *   GET  /api/surum    Atlas'ın çalışan commit'i, derleme işareti, açılış zamanı
+ *   GET  /api/doktor   son kurulum denetimi · POST /api/doktor şimdi denetle
  */
 export function apiOlustur(ayar = ortamOku()) {
   let son = null;
@@ -73,6 +87,94 @@ export function apiOlustur(ayar = ortamOku()) {
   let izleyici = null;
   const istemciler = new Set();
   const sinir = denemeSiniri();
+
+  // — sürüm, olay günlüğü, erişilebilirlik geçmişi, kurulum denetimi —
+  let atlasBilgi = null;
+  let denetim = null;
+  let denetleniyor = null;
+  const olaylar = olayDeposu({ dosya: join(VERI, "olaylar.json") });
+  const telegram = telegramAyari();
+  const telegramKisici = kisici();
+
+  /**
+   * Günlük özet (isteğe bağlı): .env ATLAS_TELEGRAM_OZET=08:30 ve Telegram açıksa, her gün o saatten
+   * sonraki ilk dakikada bir kez. Son gönderim günü data/ozet.json'da: yeniden başlatma iki kez göndermez.
+   */
+  function gunlukOzetiKur() {
+    const hedef = saatCoz(process.env.ATLAS_TELEGRAM_OZET);
+    if (!telegram || !hedef) return;
+    const dosya = join(VERI, "ozet.json");
+    let sonGonderilen; // undefined = dosya henüz okunmadı
+    let gonderiliyor = false;
+    let hata = 0;
+    let sonrakiDeneme = 0;
+    const kontrol = async () => {
+      if (sonGonderilen === undefined) sonGonderilen = await readFile(dosya, "utf8").then((s) => JSON.parse(s).son ?? null).catch(() => null);
+      if (gonderiliyor || !son || Date.now() < sonrakiDeneme || !ozetZamaniMi(hedef, sonGonderilen)) return;
+      const bugun = gunAnahtari(new Date());
+      gonderiliyor = true;
+      try {
+        await telegramGonder(telegram, gunlukOzet(son, { host: ayar.host }));
+      } catch (e) {
+        // Telegram kesintisinde dakikada bir değil, artan aralıkla (2, 4, 8 … en çok 60 dk) dener.
+        hata++;
+        sonrakiDeneme = Date.now() + Math.min(60, 2 ** hata) * 60_000;
+        console.error(`[atlas] günlük özet gönderilemedi (${hata}. deneme): ${e.message}`);
+        return;
+      } finally {
+        gonderiliyor = false;
+      }
+      hata = 0;
+      // Gönderildi: dosya yazılamasa bile bugün bir daha gönderilmez (yalnız yeniden başlatma tekrarlayabilir).
+      sonGonderilen = bugun;
+      await mkdir(VERI, { recursive: true })
+        .then(() => writeFile(dosya, JSON.stringify({ son: bugun }), "utf8"))
+        .catch((e) => console.error(`[atlas] özet tarihi yazılamadı: ${e.message}`));
+    };
+    zamanlayicilar.push(setInterval(() => kontrol().catch(() => {}), 60_000));
+  }
+
+  /** Olayı günlüğe yazar; bildirilir olanlar (Telegram açıksa) tek mesajda gönderilir. */
+  async function olayEkle(liste) {
+    const eklenen = await olaylar.ekle(liste);
+    const gidecek = eklenen.filter(bildirilir);
+    if (telegram && gidecek.length && telegramKisici.izinli()) {
+      const bastirilan = telegramKisici.bastirilaniAl();
+      const ek = bastirilan ? `\n(${bastirilan} mesaj saatlik sınır yüzünden gönderilmedi)` : "";
+      telegramGonder(telegram, mesajMetni(gidecek, { host: ayar.host }) + ek)
+        .catch((e) => console.error(`[atlas] Telegram gönderilemedi: ${e.message}`));
+    }
+    return eklenen;
+  }
+  const saglikKaydi = saglikGecmisi({ dosya: join(VERI, "saglik-gecmisi.json") });
+
+  // Son denetimin hata sayısı diskte: süren bir kurulum sorunu her yeniden başlatmada yeniden bildirilmesin
+  // (pm2 bellek sınırı ya da çökme döngüsü Telegram'ı doldururdu; saatlik sınır bellekte, başlatmayla sıfırlanır).
+  const denetimDosyasi = join(VERI, "denetim-son.json");
+  async function denetle() {
+    denetleniyor ??= (async () => {
+      const onceHata = denetim
+        ? denetim.ozet.hata
+        : await readFile(denetimDosyasi, "utf8").then((s) => Number(JSON.parse(s).hata) || 0).catch(() => 0);
+      try {
+        denetim = await doktor({ ayar, manifest: await manifestOku(), kok: KOK });
+      } catch (e) {
+        denetim = { zaman: new Date().toISOString(), sonuclar: [{ ad: "Denetim", durum: "hata", mesaj: e.message }], ozet: { ok: 0, uyari: 0, hata: 1, atla: 0 } };
+      }
+      const simdi = denetim.ozet.hata;
+      if (simdi > 0 && onceHata === 0) await olayEkle([{ seviye: "hata", tur: "denetim", metin: `Kurulum denetimi ${simdi} sorun buldu` }]);
+      if (simdi === 0 && onceHata > 0) await olayEkle([{ seviye: "iyi", tur: "denetim", metin: "Kurulum denetimi temiz" }]);
+      if ((simdi > 0) !== (onceHata > 0)) {
+        await mkdir(VERI, { recursive: true })
+          .then(() => writeFile(denetimDosyasi, JSON.stringify({ hata: simdi, zaman: denetim.zaman }), "utf8"))
+          .catch((e) => console.error(`[atlas] denetim durumu yazılamadı: ${e.message}`));
+      }
+      return denetim;
+    })().finally(() => {
+      denetleniyor = null;
+    });
+    return denetleniyor;
+  }
 
   // — pm2 + log —
   let surecHam = null;
@@ -101,7 +203,9 @@ export function apiOlustur(ayar = ortamOku()) {
     calisiyor = (async () => {
       try {
         if (secenek.zorla) await pm2Tazele();
-        son = await topla({ ...secenek, ayar, surecler: surecOzeti() });
+        const yeni = await topla({ ...secenek, ayar, surecler: surecOzeti(), saglikKaydi, denetim });
+        await olayEkle(olaylariBul(son, yeni));
+        son = { ...yeni, ...(zamanlananSaniye ? { yenilemeSaniye: zamanlananSaniye } : {}), atlas: atlasBilgi, denetim, olaylar: await olaylar.son(60), bildirimKanali: { telegram: Boolean(telegram) } };
         manifestHatasi = null;
       } catch (e) {
         manifestHatasi = `projeler.json okunamadı: ${e.message}`;
@@ -115,6 +219,8 @@ export function apiOlustur(ayar = ortamOku()) {
   }
 
   let baslatma = null;
+  // Tarama aralığı açılışta manifestten okunup zamanlanır; ekran halkası bunu (dosyadaki güncel değeri değil) görür.
+  let zamanlananSaniye = null;
   function baslat() {
     baslatma ??= (async () => {
       let saniye = 20;
@@ -123,12 +229,19 @@ export function apiOlustur(ayar = ortamOku()) {
       } catch {
         // manifest bozuksa yenile() hatayı ekrana taşır
       }
+      atlasBilgi ??= await atlasSurumu(KOK);
+      gunlukOzetiKur();
+      await olayEkle([{ seviye: "bilgi", tur: "atlas", metin: `Atlas başlatıldı (${atlasBilgi.commit ?? "sürüm bilinmiyor"} · ${ayar.ortam})` }]);
+      // Denetim dışarıya istek atar; açılışı bekletmesin, bitince ekran tazelenir.
+      denetle().then(() => yenile());
+      zamanlayicilar.push(setInterval(() => denetle().then(() => yenile()), DENETIM_ARALIK_MS));
       await pm2Tazele();
       if (surecHam) {
         await loglar.tara(surecHam);
         zamanlayicilar.push(setInterval(pm2Tazele, PM2_ARALIK_MS));
         zamanlayicilar.push(setInterval(() => surecHam && loglar.tara(surecHam).catch(() => {}), LOG_ARALIK_MS));
       }
+      zamanlananSaniye = saniye;
       zamanlayicilar.push(setInterval(() => yenile(), saniye * 1000));
       let bekleyen = null;
       // Klasör izlenir: bazı editörler dosyayı silip yeniden yazar, dosya izleyicisi kopar.
@@ -204,6 +317,13 @@ export function apiOlustur(ayar = ortamOku()) {
         if (!kimlikHazir) return json(res, 503, { hata: "Uzak erişim için sunucuda giriş ayarlanmamış." });
         if (!girisli(req)) return json(res, 401, { hata: "Oturum gerekli." });
       }
+      // Sürüm ilk taramayı beklemez: güncelleme betiği yeniden başlatmadan sonra bunu yoklar,
+      // yavaş bir ilk tarama (pm2, log kuyruğu, sağlık yoklamaları) gereksiz geri almaya yol açmasın.
+      if (req.method === "GET" && yol === "/api/surum") {
+        atlasBilgi ??= await atlasSurumu(KOK);
+        baslat().catch(() => {});
+        return json(res, 200, atlasBilgi);
+      }
       await baslat();
 
       if (req.method === "GET" && yol === "/api/durum") {
@@ -245,6 +365,20 @@ export function apiOlustur(ayar = ortamOku()) {
         spawn("code", [`"${proje.repo}"`], { shell: true, detached: true, stdio: "ignore", windowsHide: true }).unref();
         return json(res, 200, { ok: true });
       }
+      if (req.method === "POST" && yol === "/api/bildirim-dene") {
+        if (!telegram) return json(res, 400, { hata: "Telegram ayarlı değil (.env ATLAS_TELEGRAM_TOKEN + ATLAS_TELEGRAM_SOHBET)." });
+        try {
+          await telegramGonder(telegram, mesajMetni([{ seviye: "iyi", metin: "Deneme bildirimi — Atlas buraya yazabiliyor." }], { host: ayar.host }));
+          return json(res, 200, { ok: true });
+        } catch (e) {
+          return json(res, 502, { hata: e.message });
+        }
+      }
+      if (yol === "/api/doktor" && (req.method === "GET" || req.method === "POST")) {
+        const sonuc = req.method === "POST" || !denetim ? await denetle() : denetim;
+        if (req.method === "POST") yenile();
+        return json(res, 200, sonuc);
+      }
       return json(res, 404, { hata: "Bulunamadı." });
     } catch (e) {
       return json(res, 500, { hata: e.message });
@@ -258,5 +392,5 @@ export function apiOlustur(ayar = ortamOku()) {
     istemciler.clear();
   }
 
-  return { isle, durdur, yenile };
+  return { isle, durdur, yenile, baslat };
 }

@@ -1,4 +1,5 @@
 import type { Ikon as IkonTur } from "../types";
+import { useHareketAzalt } from "../hooks/useEtkilesim";
 
 const ORTAK = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
@@ -18,11 +19,38 @@ export function ProjeIkon({ tur, boyut = 20 }: { tur: IkonTur; boyut?: number })
   }
 }
 
-type SvgAd = "ev" | "harita" | "hat" | "nabiz" | "liste" | "yenile" | "arti" | "eksi" | "uyari" | "kod" | "dis" | "ara" | "klasor" | "gorev";
+type SvgAd = "ev" | "harita" | "hat" | "nabiz" | "liste" | "yenile" | "arti" | "eksi" | "uyari" | "kod" | "dis" | "ara" | "klasor" | "gorev" | "zil" | "kalkan" | "indir"
+  | "ekran" | "tam" | "kapat" | "oynat" | "duraklat" | "sunucu" | "dal" | "kure" | "komut" | "ok";
 
 export function Svg({ ad, boyut = 18 }: { ad: SvgAd; boyut?: number }) {
   const p = { width: boyut, height: boyut, viewBox: "0 0 24 24", "aria-hidden": true, ...ORTAK, strokeWidth: 1.8 };
   switch (ad) {
+    case "ekran":
+      return <svg {...p}><rect x="2.5" y="4" width="19" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></svg>;
+    case "tam":
+      return <svg {...p}><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>;
+    case "kapat":
+      return <svg {...p}><path d="M6 6l12 12M18 6 6 18" /></svg>;
+    case "oynat":
+      return <svg {...p}><path d="M7 5v14l11-7z" /></svg>;
+    case "duraklat":
+      return <svg {...p}><path d="M8 5v14M16 5v14" /></svg>;
+    case "sunucu":
+      return <svg {...p}><rect x="3" y="4" width="18" height="7" rx="2" /><rect x="3" y="13" width="18" height="7" rx="2" /><path d="M7 7.5h.01M7 16.5h.01" /></svg>;
+    case "dal":
+      return <svg {...p}><circle cx="6" cy="5" r="2" /><circle cx="6" cy="19" r="2" /><circle cx="18" cy="7" r="2" /><path d="M6 7v10M18 9c0 5-6 4-11.5 8.5" /></svg>;
+    case "kure":
+      return <svg {...p}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z" /></svg>;
+    case "komut":
+      return <svg {...p}><path d="M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3z" /></svg>;
+    case "ok":
+      return <svg {...p}><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
+    case "zil":
+      return <svg {...p}><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></svg>;
+    case "kalkan":
+      return <svg {...p}><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z" /><path d="m9 12 2 2 4-4" /></svg>;
+    case "indir":
+      return <svg {...p}><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>;
     case "ara":
       return <svg {...p}><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>;
     case "klasor":
@@ -54,12 +82,22 @@ export function Svg({ ad, boyut = 18 }: { ad: SvgAd; boyut?: number }) {
   }
 }
 
+/** Marka: gezegen + yörüngesinde dönen uydu (hareket azaltmada uydu durur). */
 export function RadarLogo({ boyut = 38 }: { boyut?: number }) {
+  const azalt = useHareketAzalt();
   return (
-    <svg width={boyut} height={boyut} viewBox="0 0 42 42" fill="none" aria-hidden="true">
+    <svg className="radar-logo" width={boyut} height={boyut} viewBox="0 0 42 42" fill="none" aria-hidden="true" style={{ overflow: "visible" }}>
       <circle cx="21" cy="21" r="11" stroke="var(--acc)" strokeWidth="1.7" />
-      <ellipse cx="21" cy="21" rx="21" ry="7" transform="rotate(-32 21 21)" stroke="var(--acc)" strokeWidth="1.7" />
-      <circle cx="34" cy="10" r="2.5" fill="var(--acc)" />
+      <g transform="rotate(-32 21 21)">
+        <ellipse cx="21" cy="21" rx="21" ry="7" stroke="var(--acc)" strokeWidth="1.7" />
+        {azalt ? (
+          <circle cx="42" cy="21" r="2.5" fill="var(--acc)" />
+        ) : (
+          <circle r="2.5" fill="var(--acc)" className="logo-uydu">
+            <animateMotion dur="7s" repeatCount="indefinite" path="M42 21A21 7 0 1 1 0 21A21 7 0 1 1 42 21" />
+          </circle>
+        )}
+      </g>
     </svg>
   );
 }

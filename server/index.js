@@ -3,7 +3,7 @@
 import { createServer } from "node:http";
 import { existsSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
-import { dirname, extname, join, normalize, resolve } from "node:path";
+import { dirname, extname, isAbsolute, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const KOK = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -38,9 +38,18 @@ const ayar = ortamOku();
 const api = apiOlustur(ayar);
 
 async function statikSun(req, res) {
-  const yol = decodeURIComponent(new URL(req.url, "http://yerel").pathname);
+  let yol;
+  try {
+    yol = decodeURIComponent(new URL(req.url, "http://yerel").pathname);
+  } catch {
+    // Bozuk yüzde kodlaması (/%E0): yakalanmazsa reddedilen söz süreci düşürürdü.
+    res.writeHead(400).end();
+    return;
+  }
   let dosya = normalize(join(DIST, yol));
-  if (!dosya.startsWith(DIST)) {
+  // Ayırıcıyla birlikte: "dist" öneki "dist-eski"/"dist-yeni" kardeş klasörlerini de kapsamasın.
+  const goreli = relative(DIST, dosya);
+  if (goreli.startsWith("..") || isAbsolute(goreli)) {
     res.writeHead(403).end();
     return;
   }
@@ -61,9 +70,11 @@ async function statikSun(req, res) {
 
 createServer((req, res) => {
   for (const [ad, deger] of Object.entries(GUVENLIK)) res.setHeader(ad, deger);
-  api.isle(req, res, () => statikSun(req, res));
+  api.isle(req, res, () => statikSun(req, res).catch(() => res.headersSent || res.writeHead(500).end()));
 }).listen(PORT, "127.0.0.1", () => {
   console.log(`Proje Atlası (${ayar.ortam}) → http://127.0.0.1:${PORT}${ayar.host ? ` · dış adres: https://${ayar.host}` : ""}`);
+  // İzleme açılışta başlar: kimse sayfayı açmasa da olay günlüğü, erişim geçmişi ve log sayaçları işler.
+  api.baslat().catch((e) => console.error(`[atlas] izleme başlatılamadı: ${e.message}`));
   if (ayar.host && !ayar.portalEposta && !ayar.parolaOzeti) console.warn("[atlas] UYARI: giriş ayarı yok — dışarıdan giriş kapalı kalır.");
   if (ayar.portalEposta) console.log(`[atlas] giriş: portal kullanıcısı (${ayar.portalGirisUrl})`);
 });

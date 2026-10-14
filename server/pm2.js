@@ -102,7 +102,8 @@ export function logIzleyici({ yayinla, tamponBoyu = 400, hataPencereMs = 15 * 60
         a.konum = konum;
         for (const metin of satirlar) {
           const hata = akim === "err" || HATA_DESENI.test(metin);
-          yeni.push({ zaman: new Date(simdi).toISOString(), akim, hata, metin: metin.slice(0, 2000) });
+          // İlk okumadaki satırların gerçek zamanı bilinmez (dosyada zaten vardı): `gecmis` işaretlenir.
+          yeni.push({ zaman: new Date(simdi).toISOString(), akim, hata, metin: metin.slice(0, 2000), ...(ilk ? { gecmis: true } : {}) });
           // İlk okumadaki geçmiş satırlar "son 15 dk" sayacına girmez (zamanları bilinmez).
           if (hata && !ilk) k.hatalar.push(simdi);
         }
