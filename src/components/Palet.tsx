@@ -75,6 +75,7 @@ export function Palet({ ogeler, kapat }: { ogeler: PaletOgesi[]; kapat: () => vo
             }}
             onKeyDown={tus}
             placeholder="Proje, bölüm ya da komut ara…"
+            aria-label="Komut ara"
             role="combobox"
             aria-expanded="true"
             aria-controls={`${kimlik}-liste`}

@@ -205,7 +205,7 @@ export function apiOlustur(ayar = ortamOku()) {
         if (secenek.zorla) await pm2Tazele();
         const yeni = await topla({ ...secenek, ayar, surecler: surecOzeti(), saglikKaydi, denetim });
         await olayEkle(olaylariBul(son, yeni));
-        son = { ...yeni, atlas: atlasBilgi, denetim, olaylar: await olaylar.son(60), bildirimKanali: { telegram: Boolean(telegram) } };
+        son = { ...yeni, ...(zamanlananSaniye ? { yenilemeSaniye: zamanlananSaniye } : {}), atlas: atlasBilgi, denetim, olaylar: await olaylar.son(60), bildirimKanali: { telegram: Boolean(telegram) } };
         manifestHatasi = null;
       } catch (e) {
         manifestHatasi = `projeler.json okunamadı: ${e.message}`;
@@ -219,6 +219,8 @@ export function apiOlustur(ayar = ortamOku()) {
   }
 
   let baslatma = null;
+  // Tarama aralığı açılışta manifestten okunup zamanlanır; ekran halkası bunu (dosyadaki güncel değeri değil) görür.
+  let zamanlananSaniye = null;
   function baslat() {
     baslatma ??= (async () => {
       let saniye = 20;
@@ -239,6 +241,7 @@ export function apiOlustur(ayar = ortamOku()) {
         zamanlayicilar.push(setInterval(pm2Tazele, PM2_ARALIK_MS));
         zamanlayicilar.push(setInterval(() => surecHam && loglar.tara(surecHam).catch(() => {}), LOG_ARALIK_MS));
       }
+      zamanlananSaniye = saniye;
       zamanlayicilar.push(setInterval(() => yenile(), saniye * 1000));
       let bekleyen = null;
       // Klasör izlenir: bazı editörler dosyayı silip yeniden yazar, dosya izleyicisi kopar.

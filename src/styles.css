@@ -591,3 +591,9 @@ button.vital:hover { transform: translateY(-2px); border-color: color-mix(in srg
 .th-iz { fill: none; stroke: var(--cizgi); stroke-width: 1.5; }
 .th-dolu { fill: none; stroke: var(--acc); stroke-width: 1.5; stroke-linecap: round; transition: stroke-dasharray 1s linear; }
 .tarama-halkasi.kopuk .th-dolu { stroke: var(--warn); }
+/* İnceleme düzeltmeleri: dar ekranda detay vurgu çizgisi kendi kutusunda; mobil duvar/menü taşmaz. */
+@media (max-width: 1100px) { .detay { position: relative; } }
+@media (max-width: 760px) {
+  .nav-duvar { width: auto; margin-top: 0; }
+  .duvar-sag { flex-wrap: wrap; min-width: 0; gap: 8px; } .duvar-sag .canli-yazi { font-size: 0; gap: 0; } .duvar-saat { font-size: 26px; }
+}

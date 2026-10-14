@@ -128,3 +128,11 @@ describe("egriYolu", () => {
     expect(egriYolu([100, 200, null], 40, 20).son).toBeNull();
   });
 });
+
+describe("egriYolu tek örnek", () => {
+  it("iki boş kutu arasındaki tek ölçüm kısa çentik olarak çizilir", async () => {
+    const { egriYolu } = await import("../src/lib/egri");
+    const e = egriYolu([null, 300, null, 100, 200], 40, 20, 0);
+    expect(e.cizgi.startsWith("M8 0L12 0")).toBe(true);
+  });
+});

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import type { Proje } from "./types";
 import { useAtlas } from "./hooks/useAtlas";
 import { Harita } from "./components/Harita";
@@ -46,7 +46,7 @@ function TaramaHalkasi({ gecen, aralik, bagli }: { gecen: number; aralik: number
   const cevre = 2 * Math.PI * 6;
   const kalan = Math.max(0, aralik - gecen);
   return (
-    <span className={`tarama-halkasi${bagli ? "" : " kopuk"}`} title={bagli ? (kalan ? `Sonraki tarama ~${kalan} sn` : "Tarama sürüyor") : "Bağlantı yok — yeniden deneniyor"}>
+    <span className={`tarama-halkasi${bagli ? "" : " kopuk"}`} title={bagli ? (kalan ? `Sonraki tarama ~${kalan} sn` : "Tarama sürüyor") : "Veri tazelenmiyor (bağlantı ya da projeler.json sorunu)"}>
       <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
         <circle cx="8" cy="8" r="6" className="th-iz" />
         <circle cx="8" cy="8" r="6" className="th-dolu" strokeDasharray={`${cevre * (1 - oran)} ${cevre}`} transform="rotate(-90 8 8)" />
@@ -94,6 +94,7 @@ export function App() {
   );
 
   useKisayollar({
+    etkin: oturum === "acik" && Boolean(veri),
     palet: () => setPaletAcik(true),
     tara: () => !taraniyor && tara(),
     duvar: () => duvarDegis(!duvar),
@@ -107,6 +108,16 @@ export function App() {
       }
     },
   });
+
+  useEffect(() => {
+    const degisti = () => setDuvar(window.location.hash === DUVAR_ADRESI);
+    window.addEventListener("hashchange", degisti);
+    window.addEventListener("popstate", degisti);
+    return () => {
+      window.removeEventListener("hashchange", degisti);
+      window.removeEventListener("popstate", degisti);
+    };
+  }, []);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--acc", vurgu);
@@ -179,11 +190,12 @@ export function App() {
     ...(girisGerekli ? [{ id: "e-cikis", tur: "Eylem" as const, ad: "Çıkış yap", ikon: <Svg ad="dis" boyut={16} />, calistir: () => cikis() }] : []),
   ];
 
+  // Anahtarlı: duvar ↔ normal geçişinde Tostlar/Palet yerinde kalır (sıra değişse de yeniden kurulmaz).
   const ortak = (
-    <>
+    <Fragment key="ortak">
       <Tostlar olaylar={veri.olaylar} projeler={veri.projeler} sec={projeSec} />
       {paletAcik && <Palet ogeler={paletOgeleri} kapat={() => setPaletAcik(false)} />}
-    </>
+    </Fragment>
   );
 
   if (duvar) {
@@ -215,13 +227,13 @@ export function App() {
             </button>
           </div>
           <div className="ust-sag">
-            <div className="saat-blok" role="status" title={`Son veri ${senkron} saniye önce alındı`}>
+            <div className="saat-blok" title={`Son veri ${senkron} saniye önce alındı`}>
               <time className="buyuk-saat mono" dateTime={simdi.toISOString()}>
                 {simdi.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}<span>:{String(simdi.getSeconds()).padStart(2, "0")}</span>
               </time>
               <span className="saat-alt">
-                <TaramaHalkasi gecen={senkron} aralik={veri.yenilemeSaniye ?? 20} bagli={bagli} />
-                <span className={`canli-yazi${bagli ? "" : " kopuk"}`}>{bagli ? "CANLI" : "BAĞLANTI YOK"}</span>
+                <TaramaHalkasi gecen={senkron} aralik={veri.yenilemeSaniye ?? 20} bagli={bagli && !veri.manifestHatasi} />
+                <span role="status" className={`canli-yazi${bagli ? "" : " kopuk"}`}>{bagli ? "CANLI" : "BAĞLANTI YOK"}</span>
                 <span className="sessiz">{simdi.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" })}</span>
               </span>
             </div>

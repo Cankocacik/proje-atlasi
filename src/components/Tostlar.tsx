@@ -58,8 +58,16 @@ export function Tostlar({ olaylar, projeler, sec }: { olaylar: Olay[] | undefine
     const { yeniler, enBuyuk } = yeniOlaylar(olaylar, son.current);
     son.current = enBuyuk;
     const gelen = yeniler.filter((o) => o.tur !== "atlas");
-    if (gelen.length) setListe((l) => [...gelen.reverse(), ...l].slice(0, 4));
+    if (!gelen.length) return;
+    const ustten = [...gelen].reverse(); // en yeni üstte; güncelleyici saf kalsın (StrictMode iki kez çağırır)
+    setListe((l) => [...ustten, ...l].slice(0, 4));
   }, [olaylar]);
+
+  // Listeden düşen (4'ü aşıp ötelenen) kartın kapatıcısı da gider: duvar ekranında günlerce birikmesin.
+  useEffect(() => {
+    const kalan = new Set(liste.map((o) => o.id));
+    for (const id of kapaticilar.current.keys()) if (!kalan.has(id)) kapaticilar.current.delete(id);
+  }, [liste]);
 
   const kapatici = (id: number) => {
     let f = kapaticilar.current.get(id);

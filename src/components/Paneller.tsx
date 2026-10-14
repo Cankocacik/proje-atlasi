@@ -50,7 +50,7 @@ export function Kenar({ veri, cikis, duvarAc, paletAc }: KenarProps) {
         {menu.map((m) => (
           <a key={m.href} href={m.href} className={`nav${konum === m.href ? " on" : ""}`} aria-current={konum === m.href ? "location" : undefined}>
             <Svg ad={m.ikon} boyut={19} /><span className="nav-ad">{m.ad}</span>
-            {m.rozet ? <span className="nav-rozet" aria-label={`${m.rozet} sorun`}>{m.rozet}</span> : null}
+            {m.rozet ? <span className="nav-rozet"><span aria-hidden="true">{m.rozet}</span><span className="gizli">{m.rozet} sorun</span></span> : null}
           </a>
         ))}
         <button type="button" className="nav nav-duvar" onClick={duvarAc} title="Televizyon / ikinci ekran için tek bakış (D)">

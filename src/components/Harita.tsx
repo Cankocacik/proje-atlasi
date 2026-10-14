@@ -98,7 +98,7 @@ export function Harita({ veri, secili, sec, eslesir, olcek, radar, simdi, yakinl
 
   // Küçük ekranlarda okunabilirlik için harita kendi içinde kaydırılır; duvar modunda kaba sığar.
   const gercekOlcek = sigdir
-    ? Math.max(0.5, Math.min((kap.w - 32) / G, (kap.h - 32) / Y))
+    ? Math.max(0.3, Math.min((kap.w - 16) / G, (kap.h - 16) / Y))
     : Math.max(0.72, Math.min(1, (kap.w - 24) / G)) * olcek;
   const byId = new Map(veri.projeler.map((p) => [p.id, p]));
   const hub = veri.projeler.find((p) => p.ikon === "hub" && p.kart);

@@ -45,6 +45,8 @@ export function useSayac(hedef: number, sure = 900): number {
 }
 
 export interface Kisayollar {
+  /** Giriş/yükleme ekranında kısayol yok (Ctrl+K paleti, D duvarı, R yetkisiz taramayı tetiklemesin). */
+  etkin: boolean;
   palet: () => void;
   tara: () => void;
   duvar: () => void;
@@ -67,6 +69,7 @@ export function useKisayollar(k: Kisayollar) {
   useEffect(() => {
     const bas = (e: KeyboardEvent) => {
       const f = ref.current;
+      if (!f.etkin) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         f.palet();

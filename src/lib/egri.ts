@@ -36,7 +36,10 @@ export function egriYolu(sureler: (number | null)[], g: number, y: number, pay =
   });
   if (parca.length) parcalar.push(parca);
 
-  const cizgi = parcalar.map((p) => p.map((n, j) => `${j ? "L" : "M"}${n.x} ${n.y}`).join("")).join("");
+  // Tek örnekli parça (iki boş kutu arası) çizgisiz kalırdı: kısa yatay çentik olarak çizilir.
+  const cizgi = parcalar
+    .map((p) => (p.length === 1 ? `M${p[0].x - 2} ${p[0].y}L${p[0].x + 2} ${p[0].y}` : p.map((n, j) => `${j ? "L" : "M"}${n.x} ${n.y}`).join("")))
+    .join("");
   const alan = parcalar
     .map((p) => `M${p[0].x} ${y}${p.map((n) => `L${n.x} ${n.y}`).join("")}L${p[p.length - 1].x} ${y}Z`)
     .join("");

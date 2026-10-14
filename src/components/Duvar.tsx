@@ -82,7 +82,11 @@ export function Duvar({ veri, vit, secili, sec, simdi, bagli, kapat }: Props) {
   const olaylar = (veri.olaylar ?? []).filter((o) => o.tur !== "atlas").slice(0, 14);
   const serit = olaylar.slice(0, 10);
   const byId = new Map(veri.projeler.map((x) => [x.id, x]));
-  const tamEkranDegis = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(() => {});
+  const tamEkranVar = Boolean(document.fullscreenEnabled && document.documentElement.requestFullscreen);
+  const tamEkranDegis = () => {
+    if (!tamEkranVar) return;
+    (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(() => {});
+  };
 
   return (
     <div className={`duvar duvar-${vit.genel}`}>
@@ -105,9 +109,11 @@ export function Duvar({ veri, vit, secili, sec, simdi, bagli, kapat }: Props) {
           <button type="button" className={`ibtn${tur ? " on" : ""}`} aria-pressed={tur} title={tur ? `Otomatik turu durdur (${TUR_SN} sn)` : "Otomatik tur: düğümleri sırayla gez"} aria-label="Otomatik tur" onClick={() => setTur((x) => !x)}>
             <Svg ad={tur ? "duraklat" : "oynat"} boyut={16} />
           </button>
-          <button type="button" className="ibtn" title={tamEkran ? "Tam ekrandan çık" : "Tam ekran"} aria-label="Tam ekran" onClick={tamEkranDegis}>
-            <Svg ad="tam" boyut={16} />
-          </button>
+          {tamEkranVar && (
+            <button type="button" className="ibtn" title={tamEkran ? "Tam ekrandan çık" : "Tam ekran"} aria-label="Tam ekran" onClick={tamEkranDegis}>
+              <Svg ad="tam" boyut={16} />
+            </button>
+          )}
           <button type="button" className="ibtn" title="Duvar modundan çık (Esc)" aria-label="Duvar modundan çık" onClick={kapat}>
             <Svg ad="kapat" boyut={16} />
           </button>
