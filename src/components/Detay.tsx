@@ -69,8 +69,10 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
         <div className="asamalar" style={{ gap: 5 }}>
           {[1, 2, 3, 4].map((i) => <span key={i} className={`asama${p.asamaSira >= i ? " on" : ""}`} style={{ height: 8 }} />)}
         </div>
-        <div className="mono" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 5, fontSize: 10, color: "var(--cok-sessiz)" }}>
-          <span>FİKİR</span><span>GELİŞTİRME</span><span>BEKLİYOR</span><span>CANLI</span>
+        <div className="mono asama-etiketleri">
+          {["FİKİR", "GELİŞTİRME", "BEKLİYOR", "CANLI"].map((ad, i) => (
+            <span key={ad} title={ad} className={Math.min(p.asamaSira, 4) === i + 1 ? "simdiki" : undefined}>{ad}</span>
+          ))}
         </div>
       </div>
 

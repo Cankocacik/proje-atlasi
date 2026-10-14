@@ -43,6 +43,15 @@ CI (`.github/workflows/ci.yml`, windows-latest): test + derleme + PowerShell 5.1
   geliştirmede (`npm run dev`, vitest) tembel kalır.
 - Tüm olay yazımı `api.js` → `olayEkle` üzerinden: günlük + (açıksa) Telegram aynı yoldan.
 - `src/` Vite + React + TS. Renk/ölçü tokenları `src/styles.css` `:root` bloğunda.
+  Arayüzün saf yardımcıları `src/lib/` (göstergeler `durumOzeti.ts`, palet araması `palet.ts`,
+  ok tuşu gezinmesi `komsu.ts`, sekme simgesi `favicon.ts`, yayın komut zinciri `yayinKomutu.ts`)
+  — `test/havali.test.ts`, `test/yayinKomutu.test.ts`.
+- **Hareket kuralı:** yeni animasyon `prefers-reduced-motion`'a uyar. CSS döngüleri sondaki genel
+  kuralla durur; SVG `<animateMotion>` CSS'i dinlemez → bileşen `useHareketAzalt()` ile hiç çizmez.
+  Giriş animasyonu `animation-fill-mode: backwards` (bitince `transform` bırakmaz; hover'ı ezmez).
+- **Durum rengi:** `--c` ton değişkeni `.st-live|dev|warn|idle|hata` sınıflarından gelir; bileşen
+  kökünde `--c` varsayılanı yazılmaz (aynı özgüllükte sonra gelip `.st-*`'yi ezer) — gerekiyorsa
+  `:where(.bilesen) { --c: … }`.
 - `projeler.json` manifesttir; kaydedilince ekran kendini yeniler (yeniden başlatma gerekmez).
 
 ## Kurallar

@@ -39,6 +39,27 @@ Sunucuda kurulum/güncelleme: `scripts\kurulum.ps1` · `scripts\guncelle.ps1`.
 
 "Şimdi tara" site önbelleğini de atlar.
 
+## Ekran
+
+- **Üst şerit:** canlı saat, tek cümlelik durum ("2 sistem sorunlu · 3 sitenin hepsi ayakta…" —
+  tıklayınca yalnız dikkat bekleyenler kalır) ve beş halkalı gösterge: siteler, pm2 süreçleri
+  (PC'de yerel değişiklik), canlıya bekleyen / çekilmemiş commit, dikkat, adımlar. Her gösterge
+  ilgili bölüme götürür. Sorun varken sayfanın tepesinde kırmızı nabız şeridi, sekme simgesinde
+  kırmızı nokta yanar.
+- **Harita:** fareyle üstüne gelince künye (site, 24 sa erişim, son commit, pm2, bekleyen iş),
+  ok tuşlarıyla düğümler arası gezinme, Ctrl + tekerlekle yakınlaştırma, yakınken sürükleyerek
+  kaydırma. Seçili düğümün bağları parlar; veri akışlarında parçacık akar; kartın altındaki ince
+  şerit son 24 saatin erişimidir.
+- **Komut paleti — `Ctrl K` (ya da `/`):** proje bul, bölüme git, siteyi aç, tara, denetle.
+  Türkçe harf duyarsız ("gunlugu" → "Olay günlüğü").
+- **Duvar modu — `D` ya da `/#duvar`:** televizyon / ikinci ekran için tek bakış: ekrana sığan
+  harita, seçili düğümün künyesi, göstergeler, son olaylar ve kayan olay şeridi. Otomatik tur
+  düğümleri 9 sn'de bir gezer (sorunlular önce); tam ekran düğmesi. Çıkış `Esc`.
+- **Anlık bildirim kartları:** sayfa açıkken gelen yeni olay sağ altta görünür (üstüne gelince
+  bekler), tıklayınca ilgili projeye gider.
+- Kısayollar: `R` tara · `D` duvar modu · `L` harita/liste · `Esc` paleti/duvarı/süzgeci kapat.
+  İşletim sisteminde "hareketi azalt" açıksa tüm döngüler (radar, parçacık, sayaç) durur.
+
 ## projeler.json alanları
 
 | Alan | Anlamı |

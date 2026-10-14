@@ -4,7 +4,14 @@ import { durumEtiketi } from "../lib/etiket";
 import { goreli } from "../lib/zaman";
 import { RadarLogo, Svg } from "./Ikon";
 
-export function Kenar({ veri, cikis }: { veri: Anlik; cikis?: () => void }) {
+interface KenarProps {
+  veri: Anlik;
+  cikis?: () => void;
+  duvarAc: () => void;
+  paletAc: () => void;
+}
+
+export function Kenar({ veri, cikis, duvarAc, paletAc }: KenarProps) {
   const toplam = veri.hafta.reduce((t, g) => t + g.sayi, 0);
   const tepe = Math.max(1, ...veri.hafta.map((g) => g.sayi));
   const [konum, setKonum] = useState(() => window.location.hash || "#harita");
@@ -13,12 +20,15 @@ export function Kenar({ veri, cikis }: { veri: Anlik; cikis?: () => void }) {
     window.addEventListener("hashchange", degisti);
     return () => window.removeEventListener("hashchange", degisti);
   }, []);
+  // Rozet yalnız son 24 saatin hatalarını sayar: eski olay sonsuza dek kırmızı rozet bırakmasın.
+  const gunOnce = Date.now() - 86_400_000;
+  const olaySorun = (veri.olaylar ?? []).filter((o) => o.seviye === "hata" && Date.parse(o.zaman) >= gunOnce).length;
   const menu = [
     { href: "#ozet", ad: "Genel bakış", ikon: "ev" as const },
     { href: "#harita", ad: "Proje haritası", ikon: "harita" as const },
-    { href: "#olaylar", ad: "Olay günlüğü", ikon: "zil" as const },
+    { href: "#olaylar", ad: "Olay günlüğü", ikon: "zil" as const, rozet: olaySorun || undefined },
     { href: "#loglar", ad: "Sunucu & loglar", ikon: "kod" as const },
-    { href: "#denetim", ad: "Kurulum denetimi", ikon: "kalkan" as const },
+    { href: "#denetim", ad: "Kurulum denetimi", ikon: "kalkan" as const, rozet: veri.denetim?.ozet.hata || undefined },
     { href: "#adimlar", ad: "Sıradaki adımlar", ikon: "liste" as const },
     { href: "#hat", ad: "Yayın hattı", ikon: "hat" as const },
     { href: "#aktivite", ad: "Son commitler", ikon: "nabiz" as const },
@@ -32,13 +42,20 @@ export function Kenar({ veri, cikis }: { veri: Anlik; cikis?: () => void }) {
           <span className="marka-alt">KOMUTA MERKEZİ</span>
         </div>
       </div>
+      <button type="button" className="kenar-ara" onClick={paletAc}>
+        <Svg ad="ara" boyut={15} /><span>Ara / komut</span><kbd>Ctrl K</kbd>
+      </button>
       <nav className="menu" aria-label="Ana menü">
         <span className="menu-baslik">ÇALIŞMA ALANI</span>
         {menu.map((m) => (
           <a key={m.href} href={m.href} className={`nav${konum === m.href ? " on" : ""}`} aria-current={konum === m.href ? "location" : undefined}>
             <Svg ad={m.ikon} boyut={19} />{m.ad}
+            {m.rozet ? <span className="nav-rozet" aria-label={`${m.rozet} sorun`}>{m.rozet}</span> : null}
           </a>
         ))}
+        <button type="button" className="nav nav-duvar" onClick={duvarAc} title="Televizyon / ikinci ekran için tek bakış (D)">
+          <Svg ad="ekran" boyut={19} />Duvar modu<kbd>D</kbd>
+        </button>
       </nav>
       <div className="kenar-alt">
         <div className="panel hafta">
@@ -47,11 +64,11 @@ export function Kenar({ veri, cikis }: { veri: Anlik; cikis?: () => void }) {
             <span><b className="disp" style={{ fontSize: 18 }}>{toplam}</b> commit</span>
           </div>
           <div className="hafta-cubuklar">
-            {veri.hafta.map((g) => (
+            {veri.hafta.map((g, i) => (
               <div key={g.tarih} className="hafta-gun" title={`${g.tarih}: ${g.sayi} commit`}>
                 <div
                   className={`hafta-cubuk${g.sayi ? (g.bugun ? " bugun" : " dolu") : ""}`}
-                  style={{ height: g.sayi ? 8 + Math.round((g.sayi / tepe) * 44) : 4 }}
+                  style={{ height: g.sayi ? 8 + Math.round((g.sayi / tepe) * 44) : 4, ["--i" as string]: i }}
                 />
                 <span className="hafta-etiket">{g.gun}</span>
               </div>
@@ -75,52 +92,23 @@ export function Kenar({ veri, cikis }: { veri: Anlik; cikis?: () => void }) {
   );
 }
 
-export function OzetSeridi({ veri }: { veri: Anlik }) {
-  const P = veri.projeler;
-  const anaProjeler = P.filter((p) => !p.ust);
-  const tamam = veri.adimlar.filter((a) => a.tamam).length;
-  const canli = P.filter((p) => p.asama === "canli").length;
-  const uyari = P.filter((p) => p.uyarilar.length > 0).length;
-  const ogeler = [
-    { ad: "Aktif proje", deger: anaProjeler.filter((p) => p.asama !== "beklemede").length, alt: `${anaProjeler.length} proje · ${P.length - anaProjeler.length} modül`, st: "live", ikon: "klasor", oran: anaProjeler.filter((p) => p.asama !== "beklemede").length / Math.max(1, anaProjeler.length) },
-    { ad: "Tamamlanan adım", deger: tamam, alt: `/ ${veri.adimlar.length} adım`, st: "idle", ikon: "gorev", oran: tamam / Math.max(1, veri.adimlar.length) },
-    { ad: "Canlı sistem", deger: canli, alt: `${P.length} proje ve modülde`, st: "dev", ikon: "nabiz", oran: canli / Math.max(1, P.length) },
-    { ad: "Dikkat bekleyen", deger: uyari, alt: uyari ? "proje / modül" : "Her şey yolunda", st: "warn", ikon: "uyari", oran: uyari / Math.max(1, P.length) },
-  ] as const;
-  return (
-    <section id="ozet" className="panel kpi-serit" aria-label="Özet göstergeler">
-      {ogeler.map((o) => (
-        <div key={o.ad} className={`kpi st-${o.st}`}>
-          <span className="kpi-ikon"><Svg ad={o.ikon} boyut={25} /></span>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0 }}>
-            <span className="kpi-ad" style={{ fontSize: 12.5, color: "var(--soluk)" }}>{o.ad}</span>
-            <span className="kpi-sayi">{String(o.deger).padStart(2, "0")}</span>
-            <span className="mono sessiz kpi-alt" style={{ fontSize: 10.5 }}>{o.alt}</span>
-          </div>
-          <div className="tikler" aria-hidden="true">
-            {Array.from({ length: 8 }, (_, i) => <span key={i} className={`tik${i < Math.round(o.oran * 8) ? " on" : ""}`} style={{ height: 7 + i * 2 }} />)}
-          </div>
-        </div>
-      ))}
-    </section>
-  );
-}
-
 export function Liste({ veri, sec, eslesir, simdi }: { veri: Anlik; sec: (id: string) => void; eslesir: (p: Proje) => boolean; simdi: Date }) {
   return (
     <div style={{ overflowX: "auto" }}>
       <table className="liste">
         <thead>
-          <tr><th>Düğüm</th><th>Tür</th><th>Durum</th><th>Sürüm</th><th>Son commit</th><th>Dikkat</th></tr>
+          <tr><th>Düğüm</th><th>Tür</th><th>Durum</th><th>Site</th><th>24 sa</th><th>Sürüm</th><th>Son commit</th><th>Dikkat</th></tr>
         </thead>
         <tbody>
           {veri.projeler.filter(eslesir).map((p) => (
             <tr key={p.id} className={`st-${p.durum}`} onClick={() => sec(p.id)}>
               <td>
-                <button type="button" onClick={() => sec(p.id)} style={{ background: "none", border: 0, padding: 0, color: "#fff", fontWeight: 600, cursor: "pointer" }}>{p.ad}</button>
+                <button type="button" className="liste-ad" onClick={() => sec(p.id)}>{p.ad}</button>
               </td>
               <td style={{ color: "var(--soluk)" }}>{p.tur}</td>
               <td><span className="pill"><span className="dot" style={{ width: 6, height: 6 }} />{durumEtiketi(p)}</span></td>
+              <td className="mono" style={{ fontSize: 12 }}>{p.saglik ? (p.saglik.ok ? `${p.saglik.ms} ms` : <span className="metin-hata">{p.saglik.kod ?? p.saglik.hata}</span>) : "—"}</td>
+              <td className="mono" style={{ fontSize: 12 }}>{p.saglikGecmisi?.yuzde != null ? `%${p.saglikGecmisi.yuzde}` : "—"}</td>
               <td className="mono" style={{ fontSize: 12 }}>{p.surum ?? p.git?.son?.kisa ?? "—"}</td>
               <td className="mono" style={{ fontSize: 12 }}>{p.git?.son ? goreli(p.git.son.tarih, simdi) : "—"}</td>
               <td style={{ color: "var(--yazi-2)" }}>{p.uyarilar.map((u) => u.metin).join(" · ") || "—"}</td>
@@ -138,11 +126,18 @@ export function Adimlar({ veri, isaretle }: { veri: Anlik; isaretle: (id: string
     (a, b) => Number(a.tamam) - Number(b.tamam) || Number(b.etiket === "engel") - Number(a.etiket === "engel"),
   );
   const tamam = veri.adimlar.filter((a) => a.tamam).length;
+  const yuzde = veri.adimlar.length ? Math.round((tamam / veri.adimlar.length) * 100) : 0;
   return (
     <section id="adimlar" className="panel adimlar-panel" aria-label="Sıradaki adımlar">
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px" }}>
-        <h2 className="panel-baslik">Sıradaki adımlar</h2>
-        <span className="mono sessiz" style={{ fontSize: 12 }}>{tamam} / {veri.adimlar.length} tamam</span>
+      <div className="harita-ust">
+        <div className="panel-baslik-grup">
+          <h2 className="panel-baslik">Sıradaki adımlar</h2>
+          <span className="panel-sayac">{veri.adimlar.length - tamam} açık</span>
+        </div>
+        <span className="adim-ozet mono">
+          <span className="ilerleme-cubuk" style={{ width: 110 }}><span style={{ width: `${yuzde}%` }} /></span>
+          {tamam} / {veri.adimlar.length} tamam
+        </span>
       </div>
       <div className="adimlar-liste">
         <div>
@@ -150,7 +145,7 @@ export function Adimlar({ veri, isaretle }: { veri: Anlik; isaretle: (id: string
             const p = byId.get(a.projeId);
             const kimlik = `adim-${a.id.replace(/[^a-z0-9]/gi, "-")}`;
             return (
-              <div key={a.id} className={`adim${a.tamam ? " tamam" : ""}`}>
+              <div key={a.id} className={`adim${a.tamam ? " tamam" : ""}${a.etiket === "engel" && !a.tamam ? " engel" : ""}`}>
                 <input id={kimlik} type="checkbox" checked={a.tamam} onChange={(e) => isaretle(a.id, e.target.checked)} />
                 <label htmlFor={kimlik} className="adim-metin" style={{ fontWeight: 500, fontSize: 14, cursor: "pointer" }}>{a.metin}</label>
                 <span className={`adim-proje st-${p?.durum ?? "idle"}`} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--soluk)", minWidth: 0 }}>
@@ -184,24 +179,27 @@ export function YayinHatti({ veri, sec }: { veri: Anlik; sec: (id: string) => vo
     <section id="hat" className="panel yayin-panel" aria-label="Yayın hattı">
       <h2 className="panel-baslik">Yayın hattı</h2>
       <div className="yayin-seritler">
-      {SERITLER.map((s) => {
-        const ogeler = gorunur.filter((p) => s.asamalar.includes(p.asama));
-        return (
-          <div key={s.baslik} className={`yayin-asama st-${s.st}`}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span className="dot" />
-              <span className="mono" style={{ fontSize: 11.5, letterSpacing: ".08em", textTransform: "uppercase" }}>{s.baslik}</span>
-              <span className="mono sessiz" style={{ marginLeft: "auto", fontSize: 11.5 }}>{ogeler.length}</span>
+        {SERITLER.map((s, i) => {
+          const ogeler = gorunur.filter((p) => s.asamalar.includes(p.asama));
+          return (
+            <div key={s.baslik} className={`yayin-asama st-${s.st}`}>
+              <div className="yayin-asama-baslik">
+                <span className="yayin-sira mono">{String(i + 1).padStart(2, "0")}</span>
+                <span className="dot" />
+                <span className="mono" style={{ fontSize: 11.5, letterSpacing: ".08em", textTransform: "uppercase" }}>{s.baslik}</span>
+                <span className="mono sessiz" style={{ marginLeft: "auto", fontSize: 11.5 }}>{ogeler.length}</span>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {ogeler.map((p) => (
+                  <button key={p.id} type="button" className={`hat-oge st-${p.durum}`} onClick={() => sec(p.id)}>
+                    <span className="dot" />{p.ad}
+                  </button>
+                ))}
+                {!ogeler.length && <span className="sessiz" style={{ fontSize: 12.5 }}>—</span>}
+              </div>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {ogeler.map((p) => (
-                <button key={p.id} type="button" className="hat-oge" style={{ cursor: "pointer" }} onClick={() => sec(p.id)}>{p.ad}</button>
-              ))}
-              {!ogeler.length && <span className="sessiz" style={{ fontSize: 12.5 }}>—</span>}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
       </div>
     </section>
   );
