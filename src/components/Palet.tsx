@@ -99,7 +99,7 @@ export function Palet({ ogeler, kapat }: { ogeler: PaletOgesi[]; kapat: () => vo
             >
               <span className="palet-ikon">{o.ikon}</span>
               <span className="palet-metin">
-                <span className="palet-ad">{o.ad}</span>
+                <span className="palet-isim">{o.ad}</span>
                 {o.alt && <span className="palet-alt">{o.alt}</span>}
               </span>
               {o.kisayol && <kbd>{o.kisayol}</kbd>}

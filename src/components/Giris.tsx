@@ -34,7 +34,7 @@ export function Giris({ giris, girisTuru }: { giris: (parola: string) => Promise
         <div className="marka" style={{ padding: 0 }}>
           <RadarLogo boyut={44} />
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <span className="marka-ad">Proje Atlası</span>
+            <span className="marka-isim">Proje Atlası</span>
             <span className="marka-alt">KOMUTA MERKEZİ</span>
           </div>
         </div>

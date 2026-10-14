@@ -50,7 +50,7 @@ export function Denetim({ denetim, denetle, denetleniyor, simdi }: Props) {
               {gorunen.map((s) => (
                 <li key={s.ad} className={`denetim-satir denetim-${s.durum}`}>
                   <span className="denetim-isaret mono" aria-label={s.durum}>{ISARET[s.durum]}</span>
-                  <span className="denetim-ad">{s.ad}</span>
+                  <span className="denetim-isim">{s.ad}</span>
                   <span className="denetim-mesaj">{s.mesaj}</span>
                   {s.cozum && (s.durum === "hata" || s.durum === "uyari") && <span className="denetim-cozum mono">→ {s.cozum}</span>}
                 </li>

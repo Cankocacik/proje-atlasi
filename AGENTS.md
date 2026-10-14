@@ -49,6 +49,9 @@ CI (`.github/workflows/ci.yml`, windows-latest): test + derleme + PowerShell 5.1
 - **Hareket kuralı:** yeni animasyon `prefers-reduced-motion`'a uyar. CSS döngüleri sondaki genel
   kuralla durur; SVG `<animateMotion>` CSS'i dinlemez → bileşen `useHareketAzalt()` ile hiç çizmez.
   Giriş animasyonu `animation-fill-mode: backwards` (bitince `transform` bırakmaz; hover'ı ezmez).
+- **Sınıf adı:** `-ad`, `ad-`, `ads`, `banner`, `sponsor`, `promo` içeren sınıf yazılmaz — reklam
+  engelleyiciler (EasyList `##.nav-ad`) öğeyi gizler; Türkçe "ad" için `-isim`/`-metin`.
+  `test/sinifAdlari.test.ts` korur.
 - **Durum rengi:** `--c` ton değişkeni `.st-live|dev|warn|idle|hata` sınıflarından gelir; bileşen
   kökünde `--c` varsayılanı yazılmaz (aynı özgüllükte sonra gelip `.st-*`'yi ezer) — gerekiyorsa
   `:where(.bilesen) { --c: … }`.

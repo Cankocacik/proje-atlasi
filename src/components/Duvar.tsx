@@ -93,7 +93,7 @@ export function Duvar({ veri, vit, secili, sec, simdi, bagli, kapat }: Props) {
       <header className="duvar-ust">
         <div className="duvar-marka">
           <RadarLogo boyut={34} />
-          <span className="marka-ad">Proje Atlası</span>
+          <span className="marka-isim">Proje Atlası</span>
         </div>
         <div className={`duvar-durum durum-${vit.genel}`}>
           <span className="durum-isik" />
