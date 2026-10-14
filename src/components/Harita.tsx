@@ -270,7 +270,7 @@ export function Harita({ veri, secili, sec, eslesir, olcek, radar, simdi, yakinl
                   <span style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
                     <span className="ico"><ProjeIkon tur={p.ikon} /></span>
                     <span style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0, alignItems: "flex-start" }}>
-                      <span className="kart-ad">{p.ad}</span>
+                      <span className="kart-isim">{p.ad}</span>
                       <span className="pill"><span className="dot" style={{ width: 6, height: 6 }} />{durumEtiketi(p)}</span>
                     </span>
                   </span>

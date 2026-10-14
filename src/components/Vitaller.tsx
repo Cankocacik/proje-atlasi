@@ -124,7 +124,7 @@ export function Vitaller({ veri, vit, git, dikey = false }: { veri: Anlik; vit: 
           <>
             <Halka oran={k.oran} ikon={k.ikon} />
             <span className="vital-govde">
-              <span className="vital-ad">{k.ad}</span>
+              <span className="vital-isim">{k.ad}</span>
               <span className="vital-sayi">
                 <KaroSayi deger={k.deger} />
                 {k.birim && <small>{k.birim}</small>}

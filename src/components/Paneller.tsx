@@ -38,7 +38,7 @@ export function Kenar({ veri, cikis, duvarAc, paletAc }: KenarProps) {
       <div className="marka">
         <RadarLogo />
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <span className="marka-ad">Proje Atlası</span>
+          <span className="marka-isim">Proje Atlası</span>
           <span className="marka-alt">KOMUTA MERKEZİ</span>
         </div>
       </div>
@@ -49,12 +49,12 @@ export function Kenar({ veri, cikis, duvarAc, paletAc }: KenarProps) {
         <span className="menu-baslik">ÇALIŞMA ALANI</span>
         {menu.map((m) => (
           <a key={m.href} href={m.href} className={`nav${konum === m.href ? " on" : ""}`} aria-current={konum === m.href ? "location" : undefined}>
-            <Svg ad={m.ikon} boyut={19} /><span className="nav-ad">{m.ad}</span>
+            <Svg ad={m.ikon} boyut={19} /><span className="nav-metin">{m.ad}</span>
             {m.rozet ? <span className="nav-rozet"><span aria-hidden="true">{m.rozet}</span><span className="gizli">{m.rozet} sorun</span></span> : null}
           </a>
         ))}
         <button type="button" className="nav nav-duvar" onClick={duvarAc} title="Televizyon / ikinci ekran için tek bakış (D)">
-          <Svg ad="ekran" boyut={19} /><span className="nav-ad">Duvar modu</span><kbd>D</kbd>
+          <Svg ad="ekran" boyut={19} /><span className="nav-metin">Duvar modu</span><kbd>D</kbd>
         </button>
       </nav>
       <div className="kenar-alt">
@@ -103,7 +103,7 @@ export function Liste({ veri, sec, eslesir, simdi }: { veri: Anlik; sec: (id: st
           {veri.projeler.filter(eslesir).map((p) => (
             <tr key={p.id} className={`st-${p.durum}`} onClick={() => sec(p.id)}>
               <td>
-                <button type="button" className="liste-ad" onClick={() => sec(p.id)}>{p.ad}</button>
+                <button type="button" className="liste-isim" onClick={() => sec(p.id)}>{p.ad}</button>
               </td>
               <td style={{ color: "var(--soluk)" }}>{p.tur}</td>
               <td><span className="pill"><span className="dot" style={{ width: 6, height: 6 }} />{durumEtiketi(p)}</span></td>
