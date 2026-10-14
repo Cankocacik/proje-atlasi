@@ -22,6 +22,8 @@ const TURLER = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".ico": "image/x-icon",
+  ".woff2": "font/woff2",
+  ".woff": "font/woff",
   ".json": "application/json; charset=utf-8",
 };
 
@@ -31,7 +33,7 @@ const GUVENLIK = {
   "referrer-policy": "no-referrer",
   "x-robots-tag": "noindex, nofollow",
   "content-security-policy":
-    "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+    "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
 };
 
 const ayar = ortamOku();
