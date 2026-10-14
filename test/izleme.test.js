@@ -84,6 +84,11 @@ describe("erişilebilirlik geçmişi", () => {
     expect(k.kutular.at(-4)).toBe("hata");
     expect(k.kutular[0]).toBeNull();
     expect(k).toMatchObject({ yuzde: 60, ortalamaMs: 200, ornek: 5 });
+    // Kutu başına ortalama yanıt süresi: düşen yoklama süreye katılmaz.
+    expect(k.sureler.at(-1)).toBe(200);
+    expect(k.sureler.at(-2)).toBe(200);
+    expect(k.sureler.at(-4)).toBeNull();
+    expect(k.sureler).toHaveLength(48);
   });
 
   it("veri yoksa yüzde null", () => {

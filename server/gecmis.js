@@ -12,7 +12,7 @@ export const KUTU_MS = 30 * 60_000;
  */
 export function kutula(ornekler, simdi = Date.now(), { kutuSayisi = 48, kutuMs = KUTU_MS } = {}) {
   const bas = simdi - kutuSayisi * kutuMs;
-  const kutular = Array.from({ length: kutuSayisi }, () => ({ ok: 0, hata: 0 }));
+  const kutular = Array.from({ length: kutuSayisi }, () => ({ ok: 0, hata: 0, ms: 0, msSayi: 0 }));
   let toplam = 0;
   let basarili = 0;
   let msToplam = 0;
@@ -27,6 +27,8 @@ export function kutula(ornekler, simdi = Date.now(), { kutuSayisi = 48, kutuMs =
       if (typeof o.ms === "number") {
         msToplam += o.ms;
         msSayi++;
+        kutular[i].ms += o.ms;
+        kutular[i].msSayi++;
       }
     }
   }
@@ -35,6 +37,8 @@ export function kutula(ornekler, simdi = Date.now(), { kutuSayisi = 48, kutuMs =
     ortalamaMs: msSayi ? Math.round(msToplam / msSayi) : null,
     ornek: toplam,
     kutular: kutular.map((k) => (k.ok + k.hata === 0 ? null : k.hata === 0 ? "ok" : k.ok === 0 ? "hata" : "kismi")),
+    // Kutu başına başarılı yoklamaların ortalama yanıt süresi (ms) — detaydaki eğri; veri yoksa null.
+    sureler: kutular.map((k) => (k.msSayi ? Math.round(k.ms / k.msSayi) : null)),
   };
 }
 

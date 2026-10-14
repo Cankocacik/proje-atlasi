@@ -111,3 +111,20 @@ describe("duvar modu turu", () => {
     expect(turdakiSonraki([], null)).toBeNull();
   });
 });
+
+describe("egriYolu", () => {
+  it("boş kutu çizgiyi böler; son değer canlı uç noktasıdır", async () => {
+    const { egriYolu } = await import("../src/lib/egri");
+    const e = egriYolu([100, 200, null, 300, 400], 40, 20, 0);
+    expect(e.enCok).toBe(400);
+    expect(e.enAz).toBe(100);
+    expect(e.cizgi.match(/M/g)).toHaveLength(2); // iki parça
+    expect(e.alan.match(/Z/g)).toHaveLength(2);
+    expect(e.son).toEqual({ x: 40, y: 0 }); // en büyük değer tepede
+  });
+  it("veri yoksa boş; son kutu boşsa uç yok", async () => {
+    const { egriYolu } = await import("../src/lib/egri");
+    expect(egriYolu([null, null], 40, 20)).toMatchObject({ cizgi: "", enCok: null, son: null });
+    expect(egriYolu([100, 200, null], 40, 20).son).toBeNull();
+  });
+});

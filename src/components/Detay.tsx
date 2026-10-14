@@ -4,6 +4,7 @@ import { gunFarki, goreli, tarihSaat } from "../lib/zaman";
 import { ASAMA_ETIKET } from "../lib/etiket";
 import { projeIlerlemesi, projeKapsami } from "../lib/ilerleme";
 import { kutuAraligi } from "../lib/olay";
+import { egriYolu } from "../lib/egri";
 import { Bekleyen } from "./Bekleyen";
 import { IcSaglik } from "./IcSaglik";
 import { ProjeIkon, Svg } from "./Ikon";
@@ -19,6 +20,32 @@ interface Props {
 
 const KAYNAK_AD = { elle: "not", git: "git", saglik: "site", pm2: "pm2", denetim: "kurulum", icsaglik: "iç" } as const;
 const KUTU_AD = { ok: "erişilebilir", kismi: "kısmi kesinti", hata: "kesinti" } as const;
+
+const EG = 280;
+const EY = 46;
+
+/** Son 24 saatin yanıt süresi (30 dk kutu ortalaması). Veri olmayan aralık boş kalır. */
+function YanitEgrisi({ sureler }: { sureler: (number | null)[] }) {
+  const e = egriYolu(sureler, EG, EY);
+  if (!e.cizgi) return null;
+  return (
+    <div className="egri" role="img" aria-label={`Son 24 saatte yanıt süresi en az ${e.enAz} ms, en çok ${e.enCok} ms`}>
+      <svg viewBox={`0 0 ${EG} ${EY}`} preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="egri-dolgu" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="var(--dev)" stopOpacity=".32" />
+            <stop offset="1" stopColor="var(--dev)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={e.alan} fill="url(#egri-dolgu)" />
+        <path d={e.cizgi} fill="none" stroke="var(--dev)" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+      {e.son && <span className="egri-uc" style={{ left: `${(e.son.x / EG) * 100}%`, top: `${(e.son.y / EY) * 100}%` }} />}
+      <span className="egri-etiket mono">{e.enCok} ms</span>
+      <span className="egri-etiket egri-alt mono">{e.enAz} ms</span>
+    </div>
+  );
+}
 
 export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
   const byId = new Map(veri.projeler.map((x) => [x.id, x]));
@@ -100,12 +127,13 @@ export function Detay({ veri, p, simdi, sec, repoAc }: Props) {
       {p.saglikGecmisi && p.saglikGecmisi.ornek > 0 && (
         <div className="erisim">
           <div className="erisim-baslik">
-            <span className="etiketcik">ERİŞİM · 24 SA</span>
+            <span className="etiketcik">ERİŞİM VE YANIT · 24 SA</span>
             <span className="mono erisim-deger" title={p.saglikGecmisi.ortalamaMs != null ? `Ortalama yanıt ${p.saglikGecmisi.ortalamaMs} ms · ${p.saglikGecmisi.ornek} yoklama` : undefined}>
               %{p.saglikGecmisi.yuzde}
               {p.saglikGecmisi.ortalamaMs != null && <span className="sessiz"> · {p.saglikGecmisi.ortalamaMs} ms</span>}
             </span>
           </div>
+          {p.saglikGecmisi.sureler && <YanitEgrisi sureler={p.saglikGecmisi.sureler} />}
           <div className="erisim-serit" role="img" aria-label={`Son 24 saatte erişilebilirlik yüzde ${p.saglikGecmisi.yuzde}, ${p.saglikGecmisi.ornek} yoklama`}>
             {p.saglikGecmisi.kutular.map((k, i, arr) => (
               <span key={i} className={`erisim-kutu ${k ?? "bos"}`} title={`${kutuAraligi(i, arr.length, simdi)} · ${k ? KUTU_AD[k] : "veri yok"}`} />

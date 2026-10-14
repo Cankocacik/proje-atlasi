@@ -124,6 +124,8 @@ export interface SaglikGecmisi {
   ortalamaMs: number | null;
   ornek: number;
   kutular: ("ok" | "kismi" | "hata" | null)[];
+  /** Kutu başına başarılı yoklamaların ortalama yanıt süresi (ms). Eski sunucu sürümünde yok. */
+  sureler?: (number | null)[];
 }
 
 export interface Olay {
