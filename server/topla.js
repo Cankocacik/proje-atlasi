@@ -128,6 +128,8 @@ export async function topla({ zorla = false, ayar, surecler = null, saglikKaydi 
   return {
     zaman: new Date().toISOString(),
     ortam: ayar.ortam,
+    // Ekrandaki "sonraki tarama" halkası için (baslat() aynı değerle zamanlar).
+    yenilemeSaniye: m.yenilemeSaniye ?? 20,
     manifestSorunlari: manifestDogrula(m),
     gorunum: m.gorunum ?? {},
     harita: m.harita ?? { genislik: 780, yukseklik: 540 },

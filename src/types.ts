@@ -102,6 +102,8 @@ export type Ortam = "yerel" | "sunucu";
 export interface Anlik {
   zaman: string;
   ortam: Ortam;
+  /** Otomatik tarama aralığı (sn). */
+  yenilemeSaniye?: number;
   surecler: Surec[] | null;
   gorunum: { vurgu?: string; radar?: boolean };
   harita: { genislik: number; yukseklik: number };

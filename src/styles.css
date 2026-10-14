@@ -585,3 +585,9 @@ button.vital:hover { transform: translateY(-2px); border-color: color-mix(in srg
 .egri-uc::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: inherit; animation: ping 2.2s ease-out infinite; }
 .egri-etiket { position: absolute; left: 0; top: -2px; font-size: 9.5px; color: var(--cok-sessiz); background: color-mix(in srgb, var(--panel) 70%, transparent); padding: 0 3px; border-radius: 3px; }
 .egri-etiket.egri-alt { top: auto; bottom: -2px; }
+.tarama-halkasi { position: relative; display: inline-grid; place-items: center; width: 16px; height: 16px; }
+.tarama-halkasi svg { position: absolute; inset: 0; }
+.tarama-halkasi .canli-nokta { width: 6px; height: 6px; }
+.th-iz { fill: none; stroke: var(--cizgi); stroke-width: 1.5; }
+.th-dolu { fill: none; stroke: var(--acc); stroke-width: 1.5; stroke-linecap: round; transition: stroke-dasharray 1s linear; }
+.tarama-halkasi.kopuk .th-dolu { stroke: var(--warn); }

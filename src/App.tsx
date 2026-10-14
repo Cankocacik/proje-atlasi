@@ -40,6 +40,22 @@ const BOLUMLER = [
 
 const DUVAR_ADRESI = "#duvar";
 
+/** Canlı noktanın çevresinde sonraki otomatik taramaya kalan süre (veri tazeliği tek bakışta). */
+function TaramaHalkasi({ gecen, aralik, bagli }: { gecen: number; aralik: number; bagli: boolean }) {
+  const oran = Math.min(1, gecen / Math.max(1, aralik));
+  const cevre = 2 * Math.PI * 6;
+  const kalan = Math.max(0, aralik - gecen);
+  return (
+    <span className={`tarama-halkasi${bagli ? "" : " kopuk"}`} title={bagli ? (kalan ? `Sonraki tarama ~${kalan} sn` : "Tarama sürüyor") : "Bağlantı yok — yeniden deneniyor"}>
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        <circle cx="8" cy="8" r="6" className="th-iz" />
+        <circle cx="8" cy="8" r="6" className="th-dolu" strokeDasharray={`${cevre * (1 - oran)} ${cevre}`} transform="rotate(-90 8 8)" />
+      </svg>
+      <span className={`canli-nokta${bagli ? " nabiz" : " kopuk"}`} />
+    </span>
+  );
+}
+
 export function App() {
   const { oturum, girisGerekli, girisTuru, giris, cikis, veri, bagli, hata, simdi, tara, taraniyor, adimIsaretle, repoAc, loglar, logYukle, denetle, denetleniyor, bildirimDene } = useAtlas();
   const [secili, setSecili] = useState<string | null>(null);
@@ -204,7 +220,7 @@ export function App() {
                 {simdi.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}<span>:{String(simdi.getSeconds()).padStart(2, "0")}</span>
               </time>
               <span className="saat-alt">
-                <span className={`canli-nokta${bagli ? " nabiz" : " kopuk"}`} />
+                <TaramaHalkasi gecen={senkron} aralik={veri.yenilemeSaniye ?? 20} bagli={bagli} />
                 <span className={`canli-yazi${bagli ? "" : " kopuk"}`}>{bagli ? "CANLI" : "BAĞLANTI YOK"}</span>
                 <span className="sessiz">{simdi.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" })}</span>
               </span>
